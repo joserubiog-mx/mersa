@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Dimensiones - Rastreo LT</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,500;0,9..40,700&family=JetBrains+Mono:wght@400;600;700&display=swap');
+
+        :root {
+            --bg: #0c0f14;
+            --surface: #141820;
+            --surface2: #1a2030;
+            --border: #2a3348;
+            --accent: #3b82f6;
+            --accent-glow: rgba(59, 130, 246, 0.15);
+            --green: #22c55e;
+            --green-dim: rgba(34, 197, 94, 0.12);
+            --amber: #f59e0b;
+            --amber-dim: rgba(245, 158, 11, 0.12);
+            --red: #ef4444;
+            --red-dim: rgba(239, 68, 68, 0.12);
+            --purple: #a855f7;
+            --purple-dim: rgba(168, 85, 247, 0.12);
+            --cyan: #06b6d4;
+            --cyan-dim: rgba(6, 182, 212, 0.12);
+            --text: #e2e8f0;
+            --text-dim: #64748b;
+            --text-muted: #475569;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        /* HEADER */
+        .header {
+            background: linear-gradient(135deg, var(--surface) 0%, var(--surface2) 100%);
+            border-bottom: 1px solid var(--border);
+            padding: 20px 32px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .logo-badge {
+            height: 44px;
+            display: flex;
+            align-items: center;
+        }
+
+        .logo-badge img {
+            height: 44px;
+            width: auto;
+            display: block;
+        }
+
+        .header-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 18px; font-weight: 700;
+        }
+
+        .header-title span { color: var(--accent); }
+
+        .header-sub {
+            font-size: 12px; color: var(--text-dim);
+            font-family: 'JetBrains Mono', monospace;
+            letter-spacing: 1px; text-transform: uppercase;
+        }
+
+        /* ORDER CARD */
+        .order-card {
+            margin: 24px 32px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 24px;
+            animation: slideIn 0.4s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .order-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .order-id {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 22px; font-weight: 700;
+        }
+
+        .order-badge {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 11px; font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            letter-spacing: 0.8px; text-transform: uppercase;
+            background: var(--cyan-dim);
+            color: var(--cyan);
+            border: 1px solid rgba(6, 182, 212, 0.25);
+        }
+
+        .order-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 16px;
+        }
+
+        .detail-item {
+            background: var(--surface2);
+            border-radius: 10px;
+            padding: 14px;
+        }
+
+        .detail-label {
+            font-size: 10px; color: var(--text-dim);
+            font-family: 'JetBrains Mono', monospace;
+            letter-spacing: 1px; text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        .detail-value { font-size: 15px; font-weight: 600; }
+
+        /* AREA SECTIONS */
+        .areas-container {
+            margin: 0 32px 40px;
+        }
+
+        .area-section {
+            margin-bottom: 24px;
+            animation: slideIn 0.4s ease both;
+        }
+
+        .area-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
+        }
+
+        .area-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 16px; font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .area-dot {
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            background: var(--green);
+            box-shadow: 0 0 8px rgba(34, 197, 94, 0.4);
+        }
+
+        .area-meta {
+            font-size: 12px;
+            color: var(--text-dim);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* DIMENSION TABLE */
+        .dim-table-wrapper {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            overflow-x: auto;
+        }
+
+        .dim-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 900px;
+        }
+
+        .dim-table thead th {
+            background: var(--surface2);
+            padding: 10px 12px;
+            text-align: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px; font-weight: 700;
+            color: var(--text-dim);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            border-bottom: 1px solid var(--border);
+            white-space: nowrap;
+            position: sticky;
+            top: 0;
+        }
+
+        .dim-table thead th:first-child {
+            text-align: left;
+            position: sticky;
+            left: 0;
+            z-index: 2;
+            background: var(--surface2);
+            min-width: 180px;
+        }
+
+        .dim-table tbody td {
+            padding: 10px 12px;
+            font-size: 13px;
+            border-bottom: 1px solid var(--border);
+            text-align: center;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .dim-table tbody td:first-child {
+            text-align: left;
+            font-weight: 600;
+            color: var(--text);
+            position: sticky;
+            left: 0;
+            background: var(--surface);
+            z-index: 1;
+            min-width: 180px;
+        }
+
+        .dim-table tbody tr:last-child td { border-bottom: none; }
+        .dim-table tbody tr:hover td { background: var(--surface2); }
+        .dim-table tbody tr:hover td:first-child { background: var(--surface2); }
+
+        .cell-value {
+            color: var(--text);
+            font-weight: 500;
+        }
+
+        .cell-empty {
+            color: var(--text-muted);
+        }
+
+        /* SECTION TITLE */
+        .section-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px; color: var(--text-dim);
+            letter-spacing: 1.5px; text-transform: uppercase;
+            margin: 0 32px 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title::after {
+            content: ''; flex: 1; height: 1px; background: var(--border);
+        }
+
+        /* EMPTY STATE */
+        .empty-state {
+            text-align: center; padding: 80px 32px;
+            display: flex; flex-direction: column; align-items: center;
+        }
+
+        .empty-icon {
+            width: 80px; height: 80px;
+            background: var(--surface);
+            border: 2px dashed var(--border);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 32px; margin-bottom: 20px; color: var(--text-dim);
+        }
+
+        .empty-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 16px; font-weight: 700;
+            margin-bottom: 8px; color: var(--text-dim);
+        }
+
+        .empty-sub { font-size: 14px; color: var(--text-muted); max-width: 400px; }
+
+        @media (max-width: 768px) {
+            .header { padding: 16px 20px; }
+            .order-card { margin: 20px; }
+            .areas-container { margin: 0 20px 30px; }
+            .section-title { margin: 0 20px 16px; }
+            .order-details { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div style="display:flex;align-items:center;gap:16px;">
+            <div class="logo-badge"><img src="logo.png" alt="RUBIO"></div>
+            <div>
+                <div class="header-title"><span>Rastreo LT</span></div>
+                <div class="header-sub">Registro de Dimensiones</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="emptyState" class="empty-state" style="display:none;">
+        <div class="empty-icon">📐</div>
+        <div class="empty-title">Sin datos</div>
+        <div class="empty-sub">Usa el formulario "Buscar Dimensiones" en Zoho Creator para abrir este dashboard con los registros de dimensiones de una orden.</div>
+    </div>
+
+    <div id="content" style="display:none;">
+        <div class="order-card">
+            <div class="order-header">
+                <div class="order-id" id="orderId">—</div>
+                <div class="order-badge" id="orderBadge">DIMENSIONES</div>
+            </div>
+            <div class="order-details" id="orderDetails"></div>
+        </div>
+
+        <div id="mpSection" style="display:none;">
+            <div class="section-title">Materia Prima</div>
+            <div class="areas-container">
+                <div class="dim-table-wrapper">
+                    <table class="dim-table" id="mpTable">
+                        <thead>
+                            <tr>
+                                <th style="text-align:left;">Tipo</th>
+                                <th>Material</th>
+                                <th>Canto</th>
+                                <th>Medida</th>
+                                <th>Cantidad Utilizada</th>
+                                <th>Conductividad IACS</th>
+                            </tr>
+                        </thead>
+                        <tbody id="mpBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-title">Registros por Área</div>
+
+        <div class="areas-container" id="areasContainer"></div>
+    </div>
+
+<script>
+    const HORAS = [
+        '7:00','7:30','8:00','8:30','9:00','9:30',
+        '10:00','10:30','11:00',
+        '12:00','12:30','13:00','13:30',
+        '14:00','14:30','15:00','15:30','16:00'
+    ];
+
+    const params = new URLSearchParams(window.location.search);
+    const oc = params.get('oc');
+    const np = params.get('np');
+    const rev = params.get('rev');
+    const cant = params.get('cant');
+    const fecha = params.get('fecha');
+    const datos = params.get('datos');
+    const mp = params.get('mp');
+
+    if (!oc || !datos) {
+        document.getElementById('emptyState').style.display = 'flex';
+    } else {
+        document.getElementById('content').style.display = 'block';
+
+        // Formato datos: cada fila separada por ~
+        // Cada campo separado por |
+        // area|operador|dim_tol|h0700|h0730|...|h1600|fecha
+        const filas = datos.split('~').map(row => {
+            const c = row.split('|');
+            return {
+                area: c[0] || '',
+                operador: c[1] || '',
+                dimTol: c[2] || '',
+                horas: c.slice(3, 21),
+                fecha: c[21] || ''
+            };
+        });
+
+        // Agrupar por área
+        const porArea = {};
+        filas.forEach(f => {
+            if (!porArea[f.area]) {
+                porArea[f.area] = { operador: f.operador, fecha: f.fecha, filas: [] };
+            }
+            porArea[f.area].filas.push(f);
+        });
+
+        const areas = Object.keys(porArea);
+        const totalRegistros = filas.length;
+
+        // Order Card
+        document.getElementById('orderId').textContent = oc;
+        document.getElementById('orderDetails').innerHTML = [
+            { label: 'Número de Parte', value: np },
+            { label: 'Revisión', value: rev },
+            { label: 'Cantidad Solicitada', value: cant },
+            { label: 'Fecha de Entrega', value: fecha },
+            { label: 'Áreas con Registro', value: areas.length },
+            { label: 'Total Dimensiones', value: totalRegistros + ' registros' },
+        ].map(d => `
+            <div class="detail-item">
+                <div class="detail-label">${d.label}</div>
+                <div class="detail-value">${d.value || '—'}</div>
+            </div>
+        `).join('');
+
+        // Render each area
+        const container = document.getElementById('areasContainer');
+        container.innerHTML = areas.map((area, idx) => {
+            const info = porArea[area];
+            const horasHeader = HORAS.map(h => `<th>${h}</th>`).join('');
+
+            const rows = info.filas.map(f => {
+                const celdas = f.horas.map((v, i) => {
+                    if (i >= HORAS.length) return '';
+                    const val = v && v !== '0' && v !== '' ? v : '';
+                    return `<td><span class="${val ? 'cell-value' : 'cell-empty'}">${val || '—'}</span></td>`;
+                }).join('');
+                return `<tr><td>${f.dimTol}</td>${celdas}</tr>`;
+            }).join('');
+
+            return `
+                <div class="area-section" style="animation-delay: ${idx * 0.1}s">
+                    <div class="area-header">
+                        <div class="area-title">
+                            <div class="area-dot"></div>
+                            ${area}
+                        </div>
+                        <div class="area-meta">Operador: <strong style="color:var(--text)">${info.operador}</strong> · ${info.fecha}</div>
+                    </div>
+                    <div class="dim-table-wrapper">
+                        <table class="dim-table">
+                            <thead>
+                                <tr>
+                                    <th>Dimensión / Tolerancia</th>
+                                    ${horasHeader}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${rows}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        // Materia Prima
+        if (mp && mp !== '') {
+            document.getElementById('mpSection').style.display = 'block';
+            const mpFilas = mp.split('~').map(row => {
+                const c = row.split('|');
+                return {
+                    tipo: c[0] || '',
+                    material: c[1] || '',
+                    canto: c[2] || '',
+                    medida: c[3] || '',
+                    cantidad: c[4] || '',
+                    conductividad: c[5] || ''
+                };
+            });
+
+            document.getElementById('mpBody').innerHTML = mpFilas.map(f => `
+                <tr>
+                    <td style="text-align:left;font-weight:600;">${f.tipo || '—'}</td>
+                    <td><span class="${f.material ? 'cell-value' : 'cell-empty'}">${f.material || '—'}</span></td>
+                    <td><span class="${f.canto ? 'cell-value' : 'cell-empty'}">${f.canto || '—'}</span></td>
+                    <td><span class="${f.medida ? 'cell-value' : 'cell-empty'}">${f.medida || '—'}</span></td>
+                    <td><span class="${f.cantidad ? 'cell-value' : 'cell-empty'}">${f.cantidad || '—'}</span></td>
+                    <td><span class="${f.conductividad ? 'cell-value' : 'cell-empty'}">${f.conductividad || '—'}</span></td>
+                </tr>
+            `).join('');
+        }
+    }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historial de Producción - F-VT-04</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap');
+
+        :root {
+            --bg: #0c0f14;
+            --surface: #141820;
+            --amber: #3b82f6;
+            --text: #e2e8f0;
+            --text-dim: #64748b;
+            --border: #2a3348;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .screen-header {
+            width: 100%;
+            background: linear-gradient(135deg, var(--surface) 0%, #1a2030 100%);
+            border-bottom: 1px solid var(--border);
+            padding: 14px 24px;
+        }
+        .screen-header h1 {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 15px; font-weight: 700;
+            color: var(--amber); letter-spacing: 1.5px;
+        }
+        .screen-header span {
+            font-size: 11px; color: var(--text-dim);
+            font-family: 'IBM Plex Mono', monospace; letter-spacing: 2px;
+        }
+
+        .screen-controls {
+            width: 100%; max-width: 900px; padding: 20px;
+        }
+        .btn-print {
+            width: 100%; padding: 14px; font-size: 15px; font-weight: 700;
+            font-family: 'IBM Plex Mono', monospace; letter-spacing: 1px;
+            border: none; border-radius: 8px; cursor: pointer;
+            background: linear-gradient(135deg, var(--amber), #2563eb); color: #fff;
+        }
+
+        /* ── Print Document ── */
+        .print-area {
+            width: 279mm; min-height: 216mm;
+            background: #fff; color: #000;
+            padding: 8mm 10mm;
+            font-family: Arial, Helvetica, sans-serif; font-size: 9px;
+            margin: 20px auto;
+            box-shadow: 0 4px 30px rgba(0,0,0,0.5);
+        }
+
+        .doc-header {
+            display: flex; justify-content: space-between; align-items: center;
+            border: 2px solid #000; padding: 6px 12px;
+        }
+        .doc-header img { height: 38px; }
+        .doc-header-center { text-align: center; flex: 1; }
+        .doc-title { font-size: 18px; font-weight: 900; letter-spacing: 2px; }
+        .doc-header-right { font-size: 10px; font-weight: 700; }
+
+        .doc-info {
+            display: flex; border: 2px solid #000; border-top: none; font-size: 11px;
+        }
+        .doc-info-cell {
+            padding: 5px 12px; border-right: 1px solid #000; flex: 1;
+        }
+        .doc-info-cell:last-child { border-right: none; }
+        .doc-info-cell b { font-size: 9px; display: block; margin-bottom: 2px; }
+
+        .doc-table {
+            width: 100%; border-collapse: collapse; margin-top: -2px; font-size: 8px;
+        }
+        .doc-table thead { display: table-header-group; }
+        .doc-table tr { page-break-inside: avoid; }
+        .doc-table th {
+            background: #1a1a2e; color: #fff;
+            border: 1px solid #333; padding: 5px 4px;
+            font-size: 7px; font-weight: 700;
+            text-transform: uppercase; text-align: center; letter-spacing: 0.3px;
+        }
+        .doc-table td {
+            border: 1px solid #999; padding: 4px 4px;
+            text-align: center; font-size: 8px; height: 16px;
+        }
+        .doc-table td.left { text-align: left; }
+
+        @media print {
+            @page { size: letter landscape; margin: 6mm; }
+            body { background: #fff; margin: 0; padding: 0; }
+            .screen-header, .screen-controls { display: none !important; }
+            .print-area {
+                width: 100%; margin: 0; padding: 6mm 8mm;
+                box-shadow: none; min-height: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="screen-header">
+        <div>
+            <h1>HISTORIAL DE PRODUCCIÓN</h1>
+            <span>F-VT-04 · GENERAR PDF</span>
+        </div>
+    </div>
+
+    <div class="screen-controls">
+        <button class="btn-print" onclick="window.print()">🖨️&nbsp;&nbsp;IMPRIMIR / GUARDAR PDF</button>
+    </div>
+
+    <div id="pagesContainer"></div>
+
+<script>
+    const p = new URLSearchParams(window.location.search);
+    const operador = p.get('oper') || '';
+
+    let areas = [];
+    const areasParam = p.get('areas');
+    if (areasParam) {
+        try {
+            areas = JSON.parse(decodeURIComponent(areasParam));
+        } catch(e) {
+            console.error('Error parsing areas:', e);
+        }
+    }
+
+    const container = document.getElementById('pagesContainer');
+
+    // Generar una página por cada área
+    areas.forEach(areaData => {
+        const page = document.createElement('div');
+        page.className = 'print-area';
+        page.style.pageBreakAfter = 'always';
+
+        let tableRows = '';
+        areaData.registros.forEach(r => {
+            // Operadores: puede haber más de uno
+            const operadores = r.operador || operador;
+
+            tableRows += `
+                <tr>
+                    <td>${r.fecha || ''}</td>
+                    <td class="left">${operadores}</td>
+                    <td>${r.ocLinea || ''}</td>
+                    <td class="left">${r.numeroParte || ''}</td>
+                    <td>${r.revision || ''}</td>
+                    <td>${r.cantidad || ''}</td>
+                    <td class="left">${r.siguienteArea || ''}</td>
+                    <td>${r.cliente || ''}</td>
+                    <td>${r.planta || ''}</td>
+                    <td class="left">${r.maquina || ''}</td>
+                    <td class="left">${r.notas || ''}</td>
+                </tr>
+            `;
+        });
+
+        page.innerHTML = `
+            <div class="doc-header">
+                <img src="logo.png" alt="RUBIO">
+                <div class="doc-header-center">
+                    <div class="doc-title">Historial de Producción</div>
+                </div>
+                <div class="doc-header-right">F-VT-04</div>
+            </div>
+
+            <div class="doc-info">
+                <div class="doc-info-cell">
+                    <b>ÁREA:</b>
+                    ${areaData.area}
+                </div>
+                <div class="doc-info-cell">
+                    <b>OPERADOR:</b>
+                    ${operador}
+                </div>
+                <div class="doc-info-cell">
+                    <b>TOTAL REGISTROS:</b>
+                    ${areaData.registros.length}
+                </div>
+            </div>
+
+            <table class="doc-table">
+                <thead>
+                    <tr>
+                        <th style="width:55px;">Fecha</th>
+                        <th style="width:90px;">Operador</th>
+                        <th style="width:95px;">Orden de Compra / Línea</th>
+                        <th style="width:80px;">Número de Parte</th>
+                        <th style="width:30px;">Rev</th>
+                        <th style="width:45px;">Cantidad (pzas)</th>
+                        <th style="width:85px;">Área o Proceso al que se pasa</th>
+                        <th style="width:55px;">Cliente</th>
+                        <th style="width:60px;">Planta</th>
+                        <th style="width:70px;">Máquina(s)</th>
+                        <th>Notas</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${tableRows}
+                </tbody>
+            </table>
+        `;
+
+        container.appendChild(page);
+    });
+
+    // Quitar page-break del último
+    const pages = container.querySelectorAll('.print-area');
+    if (pages.length > 0) {
+        pages[pages.length - 1].style.pageBreakAfter = 'auto';
+    }
+</script>
+
+</body>
+</html>

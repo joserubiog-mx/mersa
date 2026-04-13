@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reporte de Hallazgo - F-SNC-01</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap');
+
+        :root {
+            --bg: #0c0f14;
+            --surface: #141820;
+            --amber: #3b82f6;
+            --text: #e2e8f0;
+            --text-dim: #64748b;
+            --border: #2a3348;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .screen-header {
+            width: 100%;
+            background: linear-gradient(135deg, var(--surface) 0%, #1a2030 100%);
+            border-bottom: 1px solid var(--border);
+            padding: 14px 24px;
+        }
+        .screen-header h1 {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 15px; font-weight: 700;
+            color: var(--amber); letter-spacing: 1.5px;
+        }
+        .screen-header span {
+            font-size: 11px; color: var(--text-dim);
+            font-family: 'IBM Plex Mono', monospace;
+            letter-spacing: 2px;
+        }
+
+        .screen-controls {
+            width: 100%;
+            max-width: 900px;
+            padding: 20px;
+        }
+        .btn-print {
+            width: 100%;
+            padding: 14px;
+            font-size: 15px;
+            font-weight: 700;
+            font-family: 'IBM Plex Mono', monospace;
+            letter-spacing: 1px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background: linear-gradient(135deg, var(--amber), #2563eb);
+            color: #fff;
+            transition: all 0.2s;
+        }
+        .btn-print:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(59,130,246,0.3);
+        }
+
+        /* ── Print Document ── */
+        .print-area {
+            width: 216mm;
+            min-height: 279mm;
+            background: #fff;
+            color: #000;
+            padding: 12mm 15mm;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 11px;
+            margin: 20px auto;
+            box-shadow: 0 4px 30px rgba(0,0,0,0.5);
+        }
+
+        .doc-header {
+            text-align: center;
+            border-bottom: 3px solid #000;
+            padding-bottom: 12px;
+            margin-bottom: 8px;
+        }
+        .doc-header img {
+            height: 45px;
+            margin-bottom: 6px;
+        }
+        .doc-title {
+            font-size: 22px;
+            font-weight: 900;
+            letter-spacing: 2px;
+        }
+        .doc-code {
+            font-size: 12px;
+            font-weight: 700;
+            color: #444;
+            margin-top: 4px;
+        }
+
+        .doc-badge {
+            display: inline-block;
+            padding: 4px 16px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            margin: 10px 0 16px;
+        }
+        .badge-interno { background: #fef3c7; color: #92400e; border: 1px solid #f59e0b; }
+        .badge-externo { background: #fee2e2; color: #991b1b; border: 1px solid #ef4444; }
+
+        /* Table */
+        .doc-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 16px;
+        }
+        .doc-table th {
+            background: #1a1a2e;
+            color: #fff;
+            padding: 10px 14px;
+            text-align: left;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            width: 220px;
+            border: 1px solid #333;
+        }
+        .doc-table td {
+            padding: 10px 14px;
+            font-size: 12px;
+            border: 1px solid #ccc;
+            background: #fff;
+        }
+        .doc-table tr:nth-child(even) td {
+            background: #f8f9fa;
+        }
+
+        .section-title {
+            font-size: 13px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            padding: 8px 14px;
+            background: #e2e8f0;
+            border: 1px solid #ccc;
+            margin-top: 10px;
+        }
+
+        .highlight-red td {
+            background: #fef2f2 !important;
+            color: #991b1b;
+            font-weight: 700;
+        }
+        .highlight-amber td {
+            background: #fffbeb !important;
+            color: #92400e;
+            font-weight: 700;
+        }
+        .highlight-green td {
+            background: #f0fdf4 !important;
+            color: #166534;
+            font-weight: 700;
+        }
+
+        .doc-footer {
+            margin-top: 20px;
+            border-top: 2px solid #000;
+            padding-top: 10px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            color: #666;
+        }
+
+        .doc-signatures {
+            display: flex;
+            gap: 40px;
+            margin-top: 40px;
+        }
+        .sig-block {
+            flex: 1;
+            text-align: center;
+            font-size: 10px;
+        }
+        .sig-block .sig-line {
+            border-top: 1px solid #000;
+            margin-top: 40px;
+            padding-top: 4px;
+            font-weight: 700;
+        }
+
+        @media print {
+            @page { size: letter; margin: 10mm; }
+            body { background: #fff; margin: 0; padding: 0; }
+            .screen-header, .screen-controls { display: none !important; }
+            .print-area {
+                width: 100%;
+                margin: 0;
+                padding: 10mm 12mm;
+                box-shadow: none;
+                min-height: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="screen-header">
+        <div>
+            <h1>REPORTE DE HALLAZGO</h1>
+            <span>F-SNC-01 · GENERAR PDF</span>
+        </div>
+    </div>
+
+    <div class="screen-controls">
+        <button class="btn-print" onclick="window.print()">🖨️&nbsp;&nbsp;IMPRIMIR / GUARDAR PDF</button>
+    </div>
+
+    <div class="print-area">
+        <div class="doc-header">
+            <img src="logo.png" alt="RUBIO">
+            <div class="doc-title">REPORTE DE HALLAZGO</div>
+            <div class="doc-code">F-SNC-01</div>
+        </div>
+
+        <div style="text-align:center;">
+            <div class="doc-badge" id="tipoBadge">—</div>
+        </div>
+
+        <!-- Info General -->
+        <table class="doc-table" id="tablaGeneral">
+            <tr class="section-title"><td colspan="2">INFORMACIÓN GENERAL</td></tr>
+        </table>
+
+        <!-- Detalles Interno -->
+        <table class="doc-table" id="tablaInterno" style="display:none;">
+            <tr class="section-title"><td colspan="2">DETALLES DEL HALLAZGO</td></tr>
+        </table>
+
+        <!-- Acciones y Piezas -->
+        <table class="doc-table" id="tablaAcciones" style="display:none;">
+            <tr class="section-title"><td colspan="2">ACCIONES Y DISPOSICIÓN DE PIEZAS</td></tr>
+        </table>
+
+        <!-- Externo -->
+        <table class="doc-table" id="tablaExterno" style="display:none;">
+            <tr class="section-title"><td colspan="2">REPOSICIÓN</td></tr>
+        </table>
+
+        <!-- Responsables -->
+        <table class="doc-table" id="tablaResponsables" style="display:none;">
+            <tr class="section-title"><td colspan="2">RESPONSABLES</td></tr>
+        </table>
+
+        <div class="doc-footer">
+            <span id="footerFecha">—</span>
+            <span>MAQUINADOS ESPECIALES RUBIO S.A DE C.V</span>
+            <span>F-SNC-01</span>
+        </div>
+    </div>
+
+<script>
+    const p = new URLSearchParams(window.location.search);
+
+    const data = {
+        tipo: p.get('tipo') || '',
+        oc: p.get('oc') || '',
+        np: p.get('np') || '',
+        rev: p.get('rev') || '',
+        cant: p.get('cant') || '',
+        fecha: p.get('fecha') || '',
+        cliente: p.get('cliente') || '',
+        sede: p.get('sede') || '',
+        desc: p.get('desc') || '',
+        accion: p.get('accion') || '',
+        pracabado: p.get('pracabado') || '0',
+        pdesp: p.get('pdesp') || '0',
+        prinm: p.get('prinm') || '0',
+        pacept: p.get('pacept') || '0',
+        areport: p.get('areport') || '',
+        preport: p.get('preport') || '',
+        agenera: p.get('agenera') || '',
+        impacta: p.get('impacta') || '',
+        descH: p.get('descH') || '',
+        reposicion: p.get('reposicion') || '',
+        registro: p.get('registro') || '',
+        rma: p.get('rma') || '',
+    };
+
+    // Badge
+    const badge = document.getElementById('tipoBadge');
+    if (data.tipo === 'Interno') {
+        badge.className = 'doc-badge badge-interno';
+        badge.textContent = 'HALLAZGO INTERNO';
+    } else {
+        badge.className = 'doc-badge badge-externo';
+        badge.textContent = data.rma ? 'HALLAZGO EXTERNO · ' + data.rma : 'HALLAZGO EXTERNO';
+    }
+
+    // Helper
+    function addRow(table, label, value, highlight) {
+        if (!value || value === '0' || value === '') return;
+        const tr = document.createElement('tr');
+        if (highlight) tr.className = highlight;
+        tr.innerHTML = `<th>${label}</th><td>${value}</td>`;
+        table.appendChild(tr);
+    }
+
+    // Info General
+    const tGeneral = document.getElementById('tablaGeneral');
+    addRow(tGeneral, 'Orden de Compra / Línea', data.oc);
+    addRow(tGeneral, 'Número de Parte', data.np);
+    addRow(tGeneral, 'Revisión', data.rev);
+    addRow(tGeneral, 'Cantidad Solicitada', data.cant);
+    addRow(tGeneral, 'Fecha de Entrega', data.fecha);
+    addRow(tGeneral, 'Cliente', data.cliente);
+    addRow(tGeneral, 'Sede', data.sede);
+    addRow(tGeneral, 'Fecha Registro', data.registro);
+
+    if (data.tipo === 'Interno') {
+        // Detalles
+        const tInterno = document.getElementById('tablaInterno');
+        tInterno.style.display = 'table';
+        addRow(tInterno, 'Descripción No Cumplimiento', data.desc);
+        addRow(tInterno, 'Descripción Hallazgo', data.descH);
+
+        // Acciones
+        const tAcciones = document.getElementById('tablaAcciones');
+        tAcciones.style.display = 'table';
+        addRow(tAcciones, 'Acción Inmediata', data.accion);
+
+        if (data.prinm !== '0') addRow(tAcciones, 'Piezas Reproceso Inmediato', data.prinm, 'highlight-amber');
+        if (data.pdesp !== '0') addRow(tAcciones, 'Piezas Desperdicio (Scrap)', data.pdesp, 'highlight-red');
+        if (data.pacept !== '0') addRow(tAcciones, 'Piezas Aceptadas bajo Desviación', data.pacept, 'highlight-green');
+        if (data.pracabado !== '0') addRow(tAcciones, 'Piezas Reproceso Acabado', data.pracabado, 'highlight-amber');
+
+        // Responsables
+        const tResp = document.getElementById('tablaResponsables');
+        tResp.style.display = 'table';
+        addRow(tResp, 'Área Reporta', data.areport);
+        addRow(tResp, 'Persona Reporta', data.preport);
+        addRow(tResp, 'Área Genera', data.agenera);
+        addRow(tResp, 'Hallazgo Impacta', data.impacta);
+    }
+
+    if (data.tipo === 'Externo') {
+        const tExterno = document.getElementById('tablaExterno');
+        tExterno.style.display = 'table';
+        if (data.rma) addRow(tExterno, 'Número RMA', data.rma);
+        addRow(tExterno, 'Tipo Reposición', data.reposicion);
+    }
+
+    document.getElementById('footerFecha').textContent = data.registro || new Date().toLocaleString('es-MX');
+</script>
+
+</body>
+</html>

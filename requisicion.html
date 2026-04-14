@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Requisición de Compra - Maquinados Rubio</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap');
+
+        :root {
+            --bg: #0c0f14;
+            --surface: #141820;
+            --blue: #1B3A5C;
+            --blue-light: #EDF2F8;
+            --text: #e2e8f0;
+            --text-dim: #64748b;
+            --border: #2a3348;
+            --accent: #3b82f6;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .screen-header {
+            width: 100%;
+            background: linear-gradient(135deg, var(--surface) 0%, #1a2030 100%);
+            border-bottom: 1px solid var(--border);
+            padding: 14px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .screen-header-left h1 {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 15px; font-weight: 700;
+            color: var(--accent); letter-spacing: 1.5px;
+        }
+        .screen-header-left span {
+            font-size: 11px; color: var(--text-dim);
+            font-family: 'IBM Plex Mono', monospace;
+            letter-spacing: 2px;
+        }
+
+        .screen-controls {
+            width: 100%; max-width: 850px; padding: 20px;
+        }
+        .btn-print {
+            width: 100%; padding: 14px;
+            font-size: 15px; font-weight: 700;
+            font-family: 'IBM Plex Mono', monospace;
+            letter-spacing: 1px; border: none; border-radius: 8px;
+            cursor: pointer;
+            background: linear-gradient(135deg, var(--accent) 0%, #2563eb 100%);
+            color: #fff;
+            transition: all 0.3s ease;
+        }
+        .btn-print:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(59,130,246,0.4); }
+
+        /* ========== FORMATO IMPRIMIBLE ========== */
+        .print-area {
+            width: 210mm; min-height: 297mm;
+            background: #fff; color: #000;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 11px; padding: 15mm 18mm;
+            margin: 20px auto;
+            box-shadow: 0 4px 40px rgba(0,0,0,0.5);
+        }
+
+        /* Encabezado */
+        .header-table {
+            width: 100%; border: 2px solid var(--blue);
+            border-collapse: collapse; margin-bottom: 10px;
+        }
+        .header-table td { vertical-align: middle; padding: 8px; }
+        .logo-cell {
+            width: 15%; text-align: center;
+            border-right: 1px solid var(--blue);
+        }
+        .logo-text {
+            font-size: 28px; font-weight: 900;
+            color: var(--blue); letter-spacing: 4px;
+            font-family: Arial Black, sans-serif;
+        }
+        .title-cell { width: 55%; text-align: center; }
+        .title-cell .company { font-size: 16px; font-weight: bold; color: var(--blue); margin: 0; }
+        .title-cell .subtitle { font-size: 14px; font-weight: bold; color: var(--blue); margin: 3px 0 0; }
+        .consec-cell {
+            width: 30%; text-align: center;
+            border-left: 1px solid var(--blue);
+            background-color: var(--blue-light);
+        }
+        .consec-label { font-size: 11px; font-weight: bold; color: var(--blue); margin: 0; }
+        .consec-value { font-size: 20px; font-weight: bold; color: var(--blue); margin: 3px 0 0; }
+
+        /* Datos generales */
+        .info-section {
+            width: 100%; margin: 10px 0;
+            border-bottom: 2px solid var(--blue);
+            padding-bottom: 8px;
+        }
+        .info-row {
+            font-size: 10px; padding: 3px 0;
+        }
+        .info-label { font-weight: bold; color: var(--blue); }
+
+        /* Tabla de partidas */
+        .partidas-table {
+            width: 100%; border-collapse: collapse;
+            margin: 15px 0;
+        }
+        .partidas-table thead th {
+            background: #B8CCE4;
+            color: #000; font-weight: bold;
+            font-size: 11px; padding: 6px 8px;
+            text-align: left;
+            border: 1px solid #999;
+        }
+        .partidas-table tbody td {
+            border: 1px solid #ccc;
+            padding: 5px 8px; font-size: 10px;
+            vertical-align: top;
+        }
+        .partidas-table tbody tr:nth-child(even) { background: #f9f9f9; }
+
+        /* Separador */
+        .separator { border: none; border-top: 2px solid var(--blue); margin: 20px 0 0; }
+
+        /* Firmas */
+        .firmas-table { width: 100%; margin-top: 50px; }
+        .firma-cell { width: 33%; text-align: center; font-size: 10px; vertical-align: top; }
+        .firma-line {
+            border-top: 2px solid var(--blue);
+            width: 170px; margin: 0 auto;
+            padding-top: 3px;
+        }
+        .firma-titulo { color: var(--blue); font-weight: bold; }
+        .firma-nombre { color: #000; font-weight: normal; }
+        .firma-cargo { color: #666; font-size: 9px; }
+
+        .formato-code { font-size: 8px; color: #999; margin-top: 12px; }
+
+        /* Empty rows */
+        .empty-row td { height: 22px; }
+
+        @media print {
+            body { background: #fff; }
+            .screen-header, .screen-controls { display: none !important; }
+            .print-area {
+                box-shadow: none; margin: 0; padding: 10mm 15mm;
+                width: 100%; min-height: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="screen-header">
+        <div class="screen-header-left">
+            <h1>REQUISICIÓN DE COMPRA</h1>
+            <span>MAQUINADOS ESPECIALES RUBIO</span>
+        </div>
+    </div>
+
+    <div class="screen-controls">
+        <button class="btn-print" onclick="window.print()">IMPRIMIR REQUISICIÓN</button>
+    </div>
+
+    <div class="print-area" id="printArea">
+        <!-- Encabezado -->
+        <table class="header-table">
+            <tr>
+                <td class="logo-cell">
+                    <div class="logo-text">RUBIO</div>
+                </td>
+                <td class="title-cell">
+                    <p class="company">MAQUINADOS ESPECIALES RUBIO</p>
+                    <p class="subtitle">REQUISICION DE COMPRA</p>
+                </td>
+                <td class="consec-cell">
+                    <p class="consec-label">Número de Orden:</p>
+                    <p class="consec-value" id="consecutivoHeader"></p>
+                </td>
+            </tr>
+        </table>
+
+        <!-- Datos generales -->
+        <div class="info-section">
+            <div class="info-row"><span class="info-label">FECHA:</span> <span id="fecha"></span></div>
+            <div class="info-row"><span class="info-label">DEPARTAMENTO SOLICITANTE:</span> <span id="departamento"></span></div>
+            <div class="info-row"><span class="info-label">PROVEEDOR:</span> <span id="proveedor"></span></div>
+        </div>
+
+        <!-- Tabla de Partidas -->
+        <table class="partidas-table">
+            <thead>
+                <tr>
+                    <th style="width:7%">PART.</th>
+                    <th style="width:10%">CANT.</th>
+                    <th style="width:10%">UNI.</th>
+                    <th style="width:43%">DESCRIPCION</th>
+                    <th style="width:30%">OBSERVACIONES</th>
+                </tr>
+            </thead>
+            <tbody id="tbodyPartidas">
+            </tbody>
+        </table>
+
+        <!-- Separador -->
+        <hr class="separator">
+
+        <!-- Firmas -->
+        <table class="firmas-table">
+            <tr>
+                <td class="firma-cell">
+                    <div class="firma-line">
+                        <div class="firma-titulo">SOLICITO</div>
+                        <div class="firma-nombre" id="firmaSolicito"></div>
+                        <div class="firma-cargo">OPERADOR</div>
+                    </div>
+                </td>
+                <td class="firma-cell">
+                    <div class="firma-line">
+                        <div class="firma-titulo">APROBO</div>
+                        <div class="firma-nombre" id="firmaAprobo"></div>
+                        <div class="firma-cargo">Coordinador</div>
+                    </div>
+                </td>
+                <td class="firma-cell">
+                    <div class="firma-line">
+                        <div class="firma-titulo">RECIBIO</div>
+                        <div class="firma-nombre" id="firmaRecibio"></div>
+                        <div class="firma-cargo">COMPRAS</div>
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <p class="formato-code">F-CO-01</p>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const p = new URLSearchParams(window.location.search);
+
+            // Datos generales
+            document.getElementById('consecutivoHeader').textContent = p.get('consecutivo') || '';
+            document.getElementById('fecha').textContent = p.get('fecha') || '';
+            document.getElementById('departamento').textContent = p.get('departamento') || '';
+            document.getElementById('proveedor').textContent = p.get('proveedor') || '';
+            document.getElementById('firmaSolicito').textContent = p.get('solicito') || '';
+            document.getElementById('firmaAprobo').textContent = p.get('aprobo') || '';
+            document.getElementById('firmaRecibio').textContent = p.get('recibio') || '';
+
+            // Partidas
+            const partidasRaw = p.get('partidas') || '';
+            const tbody = document.getElementById('tbodyPartidas');
+
+            if (partidasRaw) {
+                const items = partidasRaw.split(',');
+                items.forEach(function(item) {
+                    const decoded = decodeURIComponent(item);
+                    const parts = decoded.split('|');
+                    // parts: [partida, cantidad, unidad, descripcion, observaciones]
+                    const tr = document.createElement('tr');
+                    tr.innerHTML =
+                        '<td>' + (parts[0] || '') + '</td>' +
+                        '<td>' + (parts[1] || '') + '</td>' +
+                        '<td>' + (parts[2] || '') + '</td>' +
+                        '<td>' + (parts[3] || '') + '</td>' +
+                        '<td>' + (parts[4] || '') + '</td>';
+                    tbody.appendChild(tr);
+                });
+
+                // Rellenar filas vacías para completar mínimo 8 filas
+                const minRows = 8;
+                const currentRows = items.length;
+                for (let i = currentRows; i < minRows; i++) {
+                    const tr = document.createElement('tr');
+                    tr.className = 'empty-row';
+                    tr.innerHTML = '<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>';
+                    tbody.appendChild(tr);
+                }
+            }
+
+            // Título de la ventana
+            const consec = p.get('consecutivo') || 'REQ';
+            document.title = 'Requisicion ' + consec + ' - Maquinados Rubio';
+        });
+    </script>
+</body>
+</html>

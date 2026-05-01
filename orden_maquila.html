@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orden de Maquila</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap');
+
+        :root {
+            --bg: #0c0f14;
+            --surface: #141820;
+            --surface2: #1a2030;
+            --border: #2a3348;
+            --amber: #3b82f6;
+            --text: #e2e8f0;
+            --text-dim: #64748b;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .screen-header {
+            width: 100%;
+            background: linear-gradient(135deg, var(--surface) 0%, var(--surface2) 100%);
+            border-bottom: 1px solid var(--border);
+            padding: 14px 24px;
+        }
+        .screen-header h1 {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 15px; font-weight: 700;
+            color: var(--amber); letter-spacing: 1.5px;
+        }
+        .screen-header span {
+            font-size: 11px; color: var(--text-dim);
+            font-family: 'IBM Plex Mono', monospace;
+            letter-spacing: 2px;
+        }
+
+        .screen-controls {
+            width: 100%;
+            max-width: 900px;
+            padding: 20px;
+        }
+
+        .btn-print {
+            width: 100%;
+            padding: 14px;
+            font-size: 15px;
+            font-weight: 700;
+            font-family: 'IBM Plex Mono', monospace;
+            letter-spacing: 1px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background: linear-gradient(135deg, var(--amber), #2563eb);
+            color: #fff;
+            transition: all 0.2s;
+        }
+        .btn-print:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(59,130,246,0.3);
+        }
+
+        /* ── Print Document ── */
+        .print-area {
+            width: 216mm;
+            min-height: 279mm;
+            background: #fff;
+            color: #000;
+            padding: 8mm 12mm;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 12px;
+            margin: 20px auto;
+            box-shadow: 0 4px 30px rgba(0,0,0,0.5);
+        }
+
+        .doc-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 2px solid #000;
+            padding: 6px 12px;
+        }
+
+        .doc-header-left img {
+            height: 42px;
+            width: auto;
+        }
+
+        .doc-header-center {
+            text-align: center;
+            flex: 1;
+        }
+
+        .doc-company-name {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            margin-bottom: 1px;
+        }
+
+        .doc-title-line {
+            font-size: 18px;
+            font-weight: 900;
+            letter-spacing: 2px;
+        }
+
+        .doc-header-right {
+            font-size: 14px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        .doc-header-right .num {
+            font-size: 18px;
+            font-weight: 900;
+        }
+
+        /* Info row */
+        .doc-info {
+            display: flex;
+            border: 2px solid #000;
+            border-top: none;
+            font-size: 12px;
+        }
+        .doc-info-cell {
+            padding: 5px 10px;
+            border-right: 1px solid #000;
+            flex: 1;
+        }
+        .doc-info-cell:last-child { border-right: none; }
+        .doc-info-cell b { display: block; font-size: 10px; margin-bottom: 2px; }
+
+        /* Table */
+        .doc-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: -2px;
+            font-size: 11px;
+        }
+        .doc-table th {
+            background: #e8e8e8;
+            border: 1.5px solid #000;
+            padding: 4px 3px;
+            font-size: 9.5px;
+            font-weight: 800;
+            text-transform: uppercase;
+            text-align: center;
+            letter-spacing: 0.5px;
+        }
+        .doc-table thead { display: table-header-group; }
+        .doc-table tr { page-break-inside: avoid; }
+        .doc-table td {
+            border: 1px solid #000;
+            padding: 3px 4px;
+            text-align: center;
+            font-size: 11px;
+            height: 18px;
+        }
+        .doc-table td.left { text-align: left; }
+        .doc-table tr.empty td { height: 18px; }
+
+        /* Footer */
+        .doc-footer {
+            border: 2px solid #000;
+            border-top: none;
+        }
+        .doc-footer-row {
+            display: flex;
+            border-bottom: 1px solid #000;
+        }
+        .doc-footer-row:last-child { border-bottom: none; }
+        .doc-footer-cell {
+            flex: 1;
+            padding: 6px 10px;
+            border-right: 1px solid #000;
+            font-size: 11px;
+        }
+        .doc-footer-cell:last-child { border-right: none; }
+        .doc-footer-cell b {
+            display: block;
+            font-size: 9.5px;
+            text-transform: uppercase;
+            margin-bottom: 3px;
+        }
+        .doc-footer-cell.wide { flex: 2; }
+
+        /* Electroplata */
+        .doc-electroplata {
+            border: 2px dotted #555;
+            padding: 5px 10px;
+            margin-top: -2px;
+            font-size: 11px;
+        }
+        .doc-electroplata .ep-title {
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        .doc-electroplata .ep-row {
+            display: flex;
+            justify-content: space-between;
+        }
+        .doc-electroplata .ep-row span { font-weight: 700; }
+
+        .doc-code {
+            font-size: 9px;
+            color: #666;
+            text-align: right;
+            margin-top: 4px;
+        }
+
+        @media print {
+            @page { size: letter; margin: 8mm; }
+            body { background: #fff; margin: 0; padding: 0; }
+            .screen-header, .screen-controls { display: none !important; }
+            .print-area {
+                width: 100%;
+                margin: 0;
+                padding: 8mm 10mm;
+                box-shadow: none;
+                min-height: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="screen-header">
+        <div>
+            <h1>ORDEN DE MAQUILA</h1>
+            <span>GENERAR PDF · SALIDA ACABADO</span>
+        </div>
+    </div>
+
+    <div class="screen-controls">
+        <button class="btn-print" onclick="window.print()">🖨️&nbsp;&nbsp;IMPRIMIR / GUARDAR PDF</button>
+    </div>
+
+    <div class="print-area" id="printArea">
+        <div class="doc-header">
+            <div class="doc-header-left">
+                <img src="logo.png" alt="RUBIO">
+            </div>
+            <div class="doc-header-center">
+                <div class="doc-company-name">MAQUINADOS ESPECIALES RUBIO S.A DE C.V</div>
+                <div class="doc-title-line">ORDEN DE MAQUILA</div>
+            </div>
+            <div class="doc-header-right">
+                No. <span class="num" id="docNum">—</span>
+            </div>
+        </div>
+
+        <div class="doc-info">
+            <div class="doc-info-cell">
+                <b>PROVEEDOR:</b>
+                <span id="docProveedor">—</span>
+            </div>
+            <div class="doc-info-cell">
+                <b>FECHA:</b>
+                <span id="docFecha">—</span>
+            </div>
+        </div>
+
+        <table class="doc-table">
+            <thead>
+                <tr>
+                    <th style="width:22px;">No.</th>
+                    <th style="width:65px;">Cantidad</th>
+                    <th style="width:50px;">Unidad</th>
+                    <th>Descripción</th>
+                    <th style="width:100px;">Proceso</th>
+                    <th style="width:105px;">Instrucciones</th>
+                    <th style="width:60px;">Orden de<br>Compra No.</th>
+                </tr>
+            </thead>
+            <tbody id="docBody"></tbody>
+        </table>
+
+        <div class="doc-footer">
+            <div class="doc-footer-row">
+                <div class="doc-footer-cell wide">
+                    <b>Observaciones:</b>
+                    <span id="docNotas">&nbsp;</span>
+                </div>
+            </div>
+            <div class="doc-footer-row">
+                <div class="doc-footer-cell">
+                    <b>Recibió:</b>
+                    <br><br><br>
+                    ____________________________
+                </div>
+                <div class="doc-footer-cell">
+                    <b>Autorizó:</b>
+                    <br><br><br>
+                    ____________________________
+                </div>
+            </div>
+        </div>
+
+        <div class="doc-electroplata" id="electroplataSection" style="display:none;">
+            <div class="ep-title">Aplica para Electroplata</div>
+            <div class="ep-row">
+                <span>FECHA DE RETORNO:</span>
+                <span>Hora: 7:00 A.M.</span>
+            </div>
+        </div>
+
+        <div class="doc-code">F-AS-01</div>
+    </div>
+
+<script>
+    function getData() {
+        const p = new URLSearchParams(window.location.search);
+        const header = {
+            ordenMaquila: p.get('om') || '',
+            proveedor: p.get('prov') || '',
+            fecha: p.get('fecha') || new Date().toLocaleDateString('es-MX'),
+            operador: p.get('oper') || '',
+            notas: p.get('notas') || '',
+        };
+        let partidas = [];
+        const jsonParam = p.get('partidas');
+        if (jsonParam) {
+            try {
+                partidas = JSON.parse(decodeURIComponent(jsonParam));
+            } catch(e) {
+                console.error('Error parsing partidas:', e);
+            }
+        }
+        return { header, partidas };
+    }
+
+    const { header, partidas } = getData();
+
+    document.getElementById('docNum').textContent = header.ordenMaquila || '—';
+    document.getElementById('docProveedor').textContent = header.proveedor || '—';
+    document.getElementById('docFecha').textContent = header.fecha || '—';
+    document.getElementById('docNotas').textContent = header.notas || '';
+
+    // Mostrar sección Electroplata si aplica
+    if (header.proveedor.toLowerCase().includes('electroplata')) {
+        document.getElementById('electroplataSection').style.display = 'block';
+    }
+
+    const tbody = document.getElementById('docBody');
+
+    for (let i = 0; i < partidas.length; i++) {
+        const tr = document.createElement('tr');
+        const p = partidas[i];
+
+        // Cantidad + peso entre paréntesis
+        let cantText = p.cantidad || '';
+        if (p.peso && p.peso !== '') {
+            cantText += ' (' + p.peso + ' kg)';
+        }
+
+        // Últimos 6 dígitos de OC sin línea
+        let ocCorta = '';
+        if (p.ocLinea && p.ocLinea !== 'S/N') {
+            const ocSinLinea = p.ocLinea.replace(/L\d+$/i, '');
+            ocCorta = ocSinLinea.length > 6 ? ocSinLinea.slice(-6) : ocSinLinea;
+        } else {
+            ocCorta = 'S/N';
+        }
+
+        tr.innerHTML = `
+            <td>${i + 1}</td>
+            <td>${cantText}</td>
+            <td>${p.unidad || 'PZS'}</td>
+            <td class="left">${p.descripcion || ''}</td>
+            <td>${p.proceso || ''}</td>
+            <td class="left">${p.instrucciones || ''}</td>
+            <td>${ocCorta}</td>
+        `;
+
+        tbody.appendChild(tr);
+    }
+</script>
+
+</body>
+</html>

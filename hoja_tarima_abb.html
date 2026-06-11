@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hoja de Tarima ABB</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap');
+
+        :root {
+            --bg: #0c0f14;
+            --surface: #141820;
+            --surface2: #1a2030;
+            --border: #2a3348;
+            --amber: #3b82f6;
+            --text: #e2e8f0;
+            --text-dim: #64748b;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .screen-header {
+            width: 100%;
+            background: linear-gradient(135deg, var(--surface) 0%, var(--surface2) 100%);
+            border-bottom: 1px solid var(--border);
+            padding: 14px 24px;
+        }
+        .screen-header h1 {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 15px; font-weight: 700;
+            color: var(--amber); letter-spacing: 1.5px;
+        }
+        .screen-header span {
+            font-size: 11px; color: var(--text-dim);
+            font-family: 'IBM Plex Mono', monospace;
+            letter-spacing: 2px;
+        }
+
+        .screen-controls {
+            width: 100%;
+            max-width: 900px;
+            padding: 20px;
+        }
+        .btn-print {
+            width: 100%;
+            padding: 14px;
+            font-size: 15px;
+            font-weight: 700;
+            font-family: 'IBM Plex Mono', monospace;
+            letter-spacing: 1px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background: linear-gradient(135deg, var(--amber), #2563eb);
+            color: #fff;
+            transition: all 0.2s;
+        }
+        .btn-print:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(59,130,246,0.3);
+        }
+
+        /* ── Print Document ── */
+        .print-area {
+            width: 216mm;
+            min-height: 279mm;
+            background: #fff;
+            color: #000;
+            padding: 8mm 12mm;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 12px;
+            margin: 20px auto;
+            box-shadow: 0 4px 30px rgba(0,0,0,0.5);
+        }
+
+        /* ── Encabezado logo ── */
+        .abb-header {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 18px;
+            padding: 8px 0 10px 0;
+        }
+        .abb-header .abb-side {
+            font-family: Georgia, 'Times New Roman', serif;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-align: center;
+            line-height: 1.5;
+        }
+        .abb-header img {
+            height: 58px;
+            width: auto;
+        }
+
+        /* ── Layout USA ── */
+        .usa-boxes {
+            display: flex;
+            gap: 14px;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+        .usa-box {
+            flex: 1;
+            border: 1px solid #000;
+            font-size: 10px;
+        }
+        .usa-box .ub-title {
+            background: #c8c8c8;
+            font-weight: 800;
+            text-align: center;
+            padding: 3px 6px;
+            border-bottom: 1px solid #000;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        .usa-box .ub-row {
+            padding: 3px 6px;
+            border-bottom: 1px solid #000;
+            line-height: 1.4;
+        }
+        .usa-box .ub-row:last-child { border-bottom: none; }
+        .usa-box .ub-row b { font-weight: 700; }
+
+        .usa-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 10px;
+        }
+        .usa-table th {
+            border: 1.5px solid #000;
+            padding: 4px;
+            font-size: 11px;
+            font-weight: 700;
+            text-align: center;
+        }
+        .usa-table td {
+            border: 1px solid #000;
+            padding: 3px 5px;
+            font-size: 10px;
+            height: 16px;
+            vertical-align: middle;
+        }
+        .usa-table td.center { text-align: center; }
+
+        .usa-pallet {
+            margin-top: 8mm;
+        }
+        .usa-pallet-top {
+            display: flex;
+            align-items: stretch;
+        }
+        .usa-pallet-label {
+            flex: 1;
+            background: #E74B4B;
+            color: #000;
+            font-weight: 800;
+            font-size: 13px;
+            text-align: center;
+            padding: 4px;
+            border: 1px solid #000;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        .usa-pallet-weight {
+            flex: 1;
+            font-weight: 800;
+            font-size: 12px;
+            padding: 4px 10px;
+            border: 1px solid #000;
+            border-left: none;
+        }
+        .usa-pallet-dims-title {
+            text-align: center;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px;
+            border: 1px solid #000;
+            border-top: none;
+            width: 50%;
+        }
+        .usa-dim-row {
+            display: flex;
+            width: 50%;
+            border: 1px solid #000;
+            border-top: none;
+            font-size: 11px;
+        }
+        .usa-dim-row .dim-name {
+            flex: 1;
+            padding: 3px 8px;
+            border-right: 1px solid #000;
+        }
+        .usa-dim-row .dim-val {
+            flex: 1;
+            padding: 3px 8px;
+            text-align: center;
+        }
+
+        /* ── Layout San Luis ── */
+        .sl-bar {
+            display: flex;
+            margin: 6px 0 12px 0;
+        }
+        .sl-bar .sl-cell {
+            border: 1px solid #000;
+            padding: 5px 10px;
+            font-size: 16px;
+            font-weight: 800;
+            text-align: center;
+        }
+        .sl-bar .sl-packing {
+            flex: 2;
+            background: #1F3864;
+            color: #fff;
+            font-style: italic;
+            font-family: Georgia, serif;
+            letter-spacing: 2px;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        .sl-bar .sl-fecha {
+            flex: 1.5;
+            background: #fff;
+            font-family: Georgia, serif;
+            font-weight: 700;
+            font-size: 13px;
+        }
+        .sl-bar .sl-tarima {
+            flex: 1;
+            background: #1F3864;
+            color: #fff;
+            font-family: Georgia, serif;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        .sl-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+        .sl-table th {
+            border: 1.5px solid #000;
+            padding: 4px;
+            font-size: 13px;
+            font-weight: 800;
+            text-align: center;
+            font-family: Georgia, serif;
+            background: #BF9000;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        .sl-table th.division {
+            background: #A0704B;
+            font-size: 10px;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        .sl-table td {
+            border: 1px solid #000;
+            padding: 3px 5px;
+            text-align: center;
+            font-size: 12px;
+            font-weight: 700;
+            height: 18px;
+        }
+
+        /* ── Layout DHL ── */
+        .dhl-title {
+            text-align: center;
+            font-size: 22px;
+            font-weight: 900;
+            letter-spacing: 2px;
+            margin: 10mm 0 8mm 0;
+        }
+        .dhl-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+        .dhl-table th {
+            background: #e8e8e8;
+            border: 1.5px solid #000;
+            padding: 5px 4px;
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            text-align: center;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        .dhl-table td {
+            border: 1px solid #000;
+            padding: 4px 5px;
+            text-align: center;
+            font-size: 12px;
+            height: 20px;
+        }
+
+        @media print {
+            @page { size: letter portrait; margin: 8mm; }
+            body { background: #fff; margin: 0; padding: 0; }
+            .screen-header, .screen-controls { display: none !important; }
+            .print-area {
+                width: 100%;
+                margin: 0;
+                padding: 8mm 10mm;
+                box-shadow: none;
+                min-height: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="screen-header">
+        <div>
+            <h1>HOJA DE TARIMA ABB</h1>
+            <span>GENERAR PDF · EMPAQUE</span>
+        </div>
+    </div>
+
+    <div class="screen-controls">
+        <button class="btn-print" onclick="window.print()">🖨️&nbsp;&nbsp;IMPRIMIR / GUARDAR PDF</button>
+    </div>
+
+    <div class="print-area"></div>
+
+<script>
+    // ══════════════════════════════════════════════════════════
+    //  LEER DATOS
+    // ══════════════════════════════════════════════════════════
+
+    function getData() {
+        const p = new URLSearchParams(window.location.search);
+        const header = {
+            tarima: p.get('tarima') || '',
+            fecha: p.get('fecha') || '',
+            operador: p.get('oper') || '',
+            peso: p.get('peso') || '',
+            numTarima: p.get('nt') || '',
+            tamano: p.get('tt') || '',
+        };
+        let partidas = [];
+        const jsonParam = p.get('partidas');
+        if (jsonParam) {
+            try {
+                partidas = JSON.parse(decodeURIComponent(jsonParam));
+            } catch(e) {
+                console.error('Error parsing partidas:', e);
+            }
+        }
+        return { header, partidas };
+    }
+
+    const { header, partidas } = getData();
+
+    // ── Fechas ──
+    function parseFecha(fechaStr) {
+        const m = (fechaStr || '').match(/(\d{1,2})\s*\/\s*(\d{1,2})\s*\/\s*(\d{4})/);
+        if (m) {
+            return new Date(parseInt(m[3]), parseInt(m[2]) - 1, parseInt(m[1]));
+        }
+        return new Date();
+    }
+    function formatearFechaLarga(fechaStr) {
+        const d = parseFecha(fechaStr);
+        const dias = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+        const meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+        const dd = String(d.getDate()).padStart(2, '0');
+        return dias[d.getDay()] + ' ' + dd + ' de ' + meses[d.getMonth()] + ' del ' + d.getFullYear();
+    }
+    const fechaLarga = formatearFechaLarga(header.fecha);
+
+    // ── Utilidades ──
+    function splitOC(ocLinea) {
+        let oc = ocLinea || '';
+        let linea = '';
+        const m = oc.match(/^(.+?)L(\d+)$/i);
+        if (m) { oc = m[1]; linea = m[2]; }
+        return { oc, linea };
+    }
+
+    const tarimaLower = (header.tarima || '').toLowerCase();
+
+    if (tarimaLower === 'usa') {
+        renderUSA();
+    } else if (tarimaLower === 'san luis') {
+        renderSanLuis();
+    } else if (tarimaLower === 'dhl') {
+        renderDHL();
+    } else {
+        renderSanLuis();
+    }
+
+    // ══════════════════════════════════════════════════════════
+    //  USA
+    // ══════════════════════════════════════════════════════════
+    function renderUSA() {
+        const tamanos = {
+            'normal':   { width: '1M',    height: '30 CM', depth: '1.25M' },
+            'especial': { width: '55 cm', height: '30 cm', depth: '105 cm' },
+        };
+        const tam = tamanos[(header.tamano || '').toLowerCase()] || tamanos['normal'];
+
+        let rows = '';
+        for (let i = 0; i < partidas.length; i++) {
+            const p = partidas[i];
+            const { oc } = splitOC(p.o || '');
+            rows += `<tr>
+                <td class="center">${oc}</td>
+                <td>${p.d || ''}</td>
+                <td class="center">${p.n || ''}</td>
+                <td class="center">${p.c || ''}</td>
+            </tr>`;
+        }
+        for (let i = partidas.length; i < 18; i++) {
+            rows += `<tr><td>&nbsp;</td><td></td><td></td><td></td></tr>`;
+        }
+
+        document.querySelector('.print-area').innerHTML = `
+            <div class="abb-header">
+                <div class="abb-side">MAQUINADOS<br>ESPECIALES</div>
+                <img src="logo.png" alt="RUBIO">
+                <div class="abb-side">ESTABLECIDO<br>EN 1970</div>
+            </div>
+
+            <div class="usa-boxes">
+                <div class="usa-box">
+                    <div class="ub-title">Ship From / Envío de</div>
+                    <div class="ub-row">nombre de la compañia /</div>
+                    <div class="ub-row">company name: Maquinados Especiales Rubio S.A de C.v</div>
+                    <div class="ub-row">Address /</div>
+                    <div class="ub-row">Dirección: <b>Lago Iseo No. 252</b></div>
+                    <div class="ub-row">City, State, Zip /</div>
+                    <div class="ub-row">Ciudad, C. Postal: <b>México CDMX 11320</b></div>
+                    <div class="ub-row">Phone / Teléfono: <b>015552545617</b> &nbsp;&nbsp;&nbsp; Fax: sin</div>
+                </div>
+                <div class="usa-box">
+                    <div class="ub-title">Ship To / Envío a</div>
+                    <div class="ub-row">Name / Industrial Connection &amp; Solutions LLC</div>
+                    <div class="ub-row">Nombre: <b>Brandon Lineberry</b></div>
+                    <div class="ub-row">Address / Mebane MFG Plant</div>
+                    <div class="ub-row">Dirección: <b>6801 Industrial Drive</b></div>
+                    <div class="ub-row">City, State, Zip /: Mebane NC 27302-8603</div>
+                    <div class="ub-row">Ciudad, C. Postal:</div>
+                    <div class="ub-row">Phone Teléfono: 1(407)831-1588</div>
+                </div>
+            </div>
+
+            <table class="usa-table">
+                <thead>
+                    <tr>
+                        <th style="width:110px;">OC</th>
+                        <th>DESCRIPCION</th>
+                        <th style="width:150px;">item</th>
+                        <th style="width:60px;">QTY</th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>
+
+            <div class="usa-pallet">
+                <div class="usa-pallet-top">
+                    <div class="usa-pallet-label">PALLET ${header.numTarima}</div>
+                    <div class="usa-pallet-weight">TOTAL WEIGHT PALLET: &nbsp;${header.peso} kg</div>
+                </div>
+                <div class="usa-pallet-dims-title">PALLET DIMENSIONS</div>
+                <div class="usa-dim-row"><div class="dim-name">width</div><div class="dim-val">${tam.width}</div></div>
+                <div class="usa-dim-row"><div class="dim-name">height</div><div class="dim-val">${tam.height}</div></div>
+                <div class="usa-dim-row"><div class="dim-name">depth</div><div class="dim-val">${tam.depth}</div></div>
+            </div>
+        `;
+    }
+
+    // ══════════════════════════════════════════════════════════
+    //  SAN LUIS
+    // ══════════════════════════════════════════════════════════
+    function renderSanLuis() {
+        let rows = '';
+        for (let i = 0; i < partidas.length; i++) {
+            const p = partidas[i];
+            const { oc, linea } = splitOC(p.o || '');
+            rows += `<tr>
+                <td>${oc}</td>
+                <td>${linea}</td>
+                <td>${p.n || ''}</td>
+                <td>${p.c || ''}</td>
+                <td>${p.dv || ''}</td>
+            </tr>`;
+        }
+        for (let i = partidas.length; i < 12; i++) {
+            rows += `<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>`;
+        }
+
+        document.querySelector('.print-area').innerHTML = `
+            <div class="abb-header">
+                <div class="abb-side">MAQUINADOS<br>ESPECIALES</div>
+                <img src="logo.png" alt="RUBIO">
+                <div class="abb-side">ESTABLECIDO<br>EN 1970</div>
+            </div>
+
+            <div class="sl-bar">
+                <div class="sl-cell sl-packing">PACKING</div>
+                <div class="sl-cell sl-fecha">${fechaLarga}</div>
+                <div class="sl-cell sl-tarima">T${header.numTarima}</div>
+            </div>
+
+            <table class="sl-table">
+                <thead>
+                    <tr>
+                        <th style="width:130px;">OC</th>
+                        <th style="width:80px;">LINEA</th>
+                        <th>ITEM</th>
+                        <th style="width:100px;">CANTIDAD</th>
+                        <th style="width:130px;" class="division">Division</th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>
+        `;
+    }
+
+    // ══════════════════════════════════════════════════════════
+    //  DHL
+    // ══════════════════════════════════════════════════════════
+    function renderDHL() {
+        let rows = '';
+        for (let i = 0; i < partidas.length; i++) {
+            const p = partidas[i];
+            const { oc, linea } = splitOC(p.o || '');
+            rows += `<tr>
+                <td>${oc}</td>
+                <td>${linea ? 'L' + linea : ''}</td>
+                <td>${p.n || ''}</td>
+                <td>${p.c || ''}</td>
+            </tr>`;
+        }
+
+        document.querySelector('.print-area').innerHTML = `
+            <div class="abb-header">
+                <div class="abb-side">MAQUINADOS<br>ESPECIALES</div>
+                <img src="logo.png" alt="RUBIO">
+                <div class="abb-side">ESTABLECIDO<br>EN 1970</div>
+            </div>
+            <div class="dhl-title">ENVIADO POR DHL</div>
+            <div style="text-align:right; font-size:12px; margin-bottom:6px;">FECHA: ${fechaLarga}</div>
+            <table class="dhl-table">
+                <thead>
+                    <tr>
+                        <th style="width:140px;">PO</th>
+                        <th style="width:90px;">LÍNEA</th>
+                        <th>ITEM</th>
+                        <th style="width:110px;">CANTIDAD</th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>
+        `;
+    }
+</script>
+
+</body>
+</html>

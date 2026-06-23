@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard de Tarimas</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap');
+:root{
+  --bg:#0c0f14; --surface:#141820; --surface2:#1a2030; --border:#2a3348;
+  --accent:#3b82f6; --text:#e2e8f0; --text-dim:#64748b;
+  --green:#22c55e; --amber:#f59e0b;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+.header{
+  background:linear-gradient(135deg,var(--surface) 0%,var(--surface2) 100%);
+  border-bottom:1px solid var(--border);
+  padding:18px 28px;display:flex;justify-content:space-between;align-items:center;
+}
+.header h1{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:700;color:var(--accent);letter-spacing:2px;}
+.header .periodo{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--text-dim);letter-spacing:2px;}
+.container{max-width:1280px;margin:0 auto;padding:24px;}
+.filtros{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:24px;}
+.filtro{flex:1;min-width:200px;}
+.filtro label{display:block;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;margin-bottom:6px;}
+.filtro select{
+  width:100%;padding:11px 14px;background:var(--surface2);color:var(--text);
+  border:1px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer;
+}
+.cards{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:24px;}
+.card{
+  flex:1;min-width:180px;background:var(--surface);border:1px solid var(--border);
+  border-radius:12px;padding:18px 20px;
+}
+.card .label{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:1.5px;color:var(--text-dim);text-transform:uppercase;margin-bottom:8px;}
+.card .value{font-family:'IBM Plex Mono',monospace;font-size:30px;font-weight:700;}
+.card.c-blue .value{color:var(--accent);}
+.card.c-green .value{color:var(--green);}
+.card.c-amber .value{color:var(--amber);}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px;margin-bottom:24px;}
+.panel-title{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:18px;display:flex;align-items:center;gap:8px;}
+.panel-title::before{content:'';width:4px;height:16px;background:var(--accent);border-radius:2px;}
+.chart-wrap{position:relative;height:380px;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);text-align:left;padding:10px 12px;border-bottom:1px solid var(--border);}
+td{padding:10px 12px;border-bottom:1px solid var(--border);}
+td.num{text-align:right;font-family:'IBM Plex Mono',monospace;}
+tr:hover td{background:var(--surface2);}
+.empty-msg{text-align:center;color:var(--text-dim);font-family:'IBM Plex Mono',monospace;padding:60px 20px;letter-spacing:1px;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>DASHBOARD DE TARIMAS</h1>
+  <span class="periodo" id="periodoLabel"></span>
+</div>
+
+<div class="container" id="app"></div>
+
+<script>
+const params = new URLSearchParams(window.location.search);
+const periodo = params.get('periodo') || '';
+document.getElementById('periodoLabel').textContent = periodo;
+
+// Parse datos: filas § , campos ¦ -> cliente¦sede¦semanaKey(yyyyMMdd)¦cantidad
+let datos = [];
+const param = params.get('datos'); // URLSearchParams ya decodifica
+if (param) {
+  const filas = param.split('\u00A7');
+  for (let i = 0; i < filas.length; i++) {
+    const c = filas[i].split('\u00A6');
+    if (c.length >= 4) {
+      datos.push({
+        cliente: c[0] || 'Sin Cliente',
+        sede:    c[1] || 'Sin Sede',
+        semKey:  c[2] || '',          // yyyyMMdd del lunes
+        cant:    parseInt(c[3]) || 0
+      });
+    }
+  }
+}
+
+const app = document.getElementById('app');
+
+if (datos.length === 0) {
+  app.innerHTML = '<div class="empty-msg">No hay datos para el período seleccionado.</div>';
+} else {
+  buildDashboard();
+}
+
+// Etiqueta legible de semana: "dd/MM" del lunes
+function semLabel(key){
+  if(key.length !== 8) return key;
+  const d = key.slice(6,8), m = key.slice(4,6);
+  return d + '/' + m;
+}
+
+function buildDashboard(){
+  // Listas únicas ordenadas
+  const semanas = [...new Set(datos.map(d=>d.semKey))].sort();
+  const clientes = [...new Set(datos.map(d=>d.cliente))].sort();
+  const sedes = [...new Set(datos.map(d=>d.sede))].sort();
+
+  app.innerHTML = `
+    <div class="filtros">
+      <div class="filtro">
+        <label>Cliente</label>
+        <select id="fCliente"><option value="">Todos los clientes</option>${clientes.map(c=>`<option>${c}</option>`).join('')}</select>
+      </div>
+      <div class="filtro">
+        <label>Sede</label>
+        <select id="fSede"><option value="">Todas las sedes</option>${sedes.map(s=>`<option>${s}</option>`).join('')}</select>
+      </div>
+    </div>
+    <div class="cards">
+      <div class="card c-blue"><div class="label">Total Enviado</div><div class="value" id="kTotal">0</div></div>
+      <div class="card c-green"><div class="label">Clientes</div><div class="value" id="kClientes">0</div></div>
+      <div class="card c-amber"><div class="label">Semanas</div><div class="value" id="kSemanas">0</div></div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Envíos por Semana</div>
+      <div class="chart-wrap"><canvas id="chartSemana"></canvas></div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Por Cliente y Sede</div>
+      <div class="chart-wrap"><canvas id="chartClienteSede"></canvas></div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Detalle</div>
+      <table>
+        <thead><tr><th>Cliente</th><th>Sede</th><th>Semana (lun)</th><th style="text-align:right">Cantidad</th></tr></thead>
+        <tbody id="tabla"></tbody>
+      </table>
+    </div>
+  `;
+
+  let chartSem = null, chartCS = null;
+
+  function filtrar(){
+    const fc = document.getElementById('fCliente').value;
+    const fs = document.getElementById('fSede').value;
+    return datos.filter(d => (!fc || d.cliente===fc) && (!fs || d.sede===fs));
+  }
+
+  const paleta = ['#3b82f6','#22c55e','#f59e0b','#a855f7','#ef4444','#06b6d4','#ec4899','#84cc16'];
+
+  function render(){
+    const f = filtrar();
+
+    // KPIs
+    const total = f.reduce((a,d)=>a+d.cant,0);
+    document.getElementById('kTotal').textContent = total.toLocaleString('es-MX');
+    document.getElementById('kClientes').textContent = new Set(f.map(d=>d.cliente)).size;
+    document.getElementById('kSemanas').textContent = new Set(f.map(d=>d.semKey)).size;
+
+    const semanasF = [...new Set(f.map(d=>d.semKey))].sort();
+    const labelsSem = semanasF.map(semLabel);
+
+    // ── Chart 1: por semana, barras apiladas por cliente ──
+    const clientesF = [...new Set(f.map(d=>d.cliente))].sort();
+    const dsSem = clientesF.map((cl,idx)=>({
+      label: cl,
+      data: semanasF.map(sk => f.filter(d=>d.cliente===cl && d.semKey===sk).reduce((a,d)=>a+d.cant,0)),
+      backgroundColor: paleta[idx % paleta.length]
+    }));
+    if(chartSem) chartSem.destroy();
+    chartSem = new Chart(document.getElementById('chartSemana'), {
+      type:'bar',
+      data:{ labels: labelsSem, datasets: dsSem },
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{ labels:{ color:'#e2e8f0', font:{family:'DM Sans'} } } },
+        scales:{
+          x:{ stacked:true, ticks:{color:'#64748b'}, grid:{color:'#2a3348'} },
+          y:{ stacked:true, ticks:{color:'#64748b'}, grid:{color:'#2a3348'}, beginAtZero:true }
+        }
+      }
+    });
+
+    // ── Chart 2: por cliente+sede (total del periodo) ──
+    const csMap = {};
+    f.forEach(d=>{ const k=d.cliente+' · '+d.sede; csMap[k]=(csMap[k]||0)+d.cant; });
+    const csLabels = Object.keys(csMap).sort((a,b)=>csMap[b]-csMap[a]);
+    if(chartCS) chartCS.destroy();
+    chartCS = new Chart(document.getElementById('chartClienteSede'), {
+      type:'bar',
+      data:{ labels: csLabels, datasets:[{ label:'Cantidad', data: csLabels.map(k=>csMap[k]), backgroundColor:'#3b82f6' }] },
+      options:{
+        indexAxis:'y', responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{display:false} },
+        scales:{
+          x:{ ticks:{color:'#64748b'}, grid:{color:'#2a3348'}, beginAtZero:true },
+          y:{ ticks:{color:'#e2e8f0'}, grid:{display:false} }
+        }
+      }
+    });
+
+    // ── Tabla ──
+    const rows = [...f].sort((a,b)=>
+      a.cliente.localeCompare(b.cliente) || a.sede.localeCompare(b.sede) || a.semKey.localeCompare(b.semKey)
+    );
+    document.getElementById('tabla').innerHTML = rows.map(d=>`
+      <tr><td>${d.cliente}</td><td>${d.sede}</td><td>${semLabel(d.semKey)}</td><td class="num">${d.cant.toLocaleString('es-MX')}</td></tr>
+    `).join('');
+  }
+
+  document.getElementById('fCliente').addEventListener('change', render);
+  document.getElementById('fSede').addEventListener('change', render);
+  render();
+}
+</script>
+
+</body>
+</html>

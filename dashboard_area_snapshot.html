@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Snapshot de Área</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap');
+:root{
+  --bg:#0c0f14; --surface:#141820; --surface2:#1a2030; --border:#2a3348;
+  --accent:#3b82f6; --text:#e2e8f0; --text-dim:#64748b;
+  --green:#22c55e; --amber:#f59e0b; --red:#ef4444;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+.header{
+  background:linear-gradient(135deg,var(--surface) 0%,var(--surface2) 100%);
+  border-bottom:1px solid var(--border);padding:18px 28px;
+  display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;
+}
+.header h1{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:700;color:var(--accent);letter-spacing:2px;}
+.header-left{display:flex;align-items:center;gap:16px;}
+.header-left img{height:38px;width:auto;}
+.header .meta{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text-dim);letter-spacing:1.5px;text-align:right;}
+.container{max-width:1200px;margin:0 auto;padding:24px;}
+.cards{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:26px;}
+.card{flex:1;min-width:170px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 20px;}
+.card .label{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:1.5px;color:var(--text-dim);text-transform:uppercase;margin-bottom:8px;}
+.card .value{font-family:'IBM Plex Mono',monospace;font-size:30px;font-weight:700;}
+.card.c-blue .value{color:var(--accent);}
+.card.c-green .value{color:var(--green);}
+.card.c-amber .value{color:var(--amber);}
+.card.c-red .value{color:var(--red);}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px;margin-bottom:24px;}
+.panel-title{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+.panel-title::before{content:'';width:4px;height:16px;background:var(--accent);border-radius:2px;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);text-align:left;padding:10px 12px;border-bottom:1px solid var(--border);}
+td{padding:10px 12px;border-bottom:1px solid var(--border);}
+td.num{text-align:right;font-family:'IBM Plex Mono',monospace;}
+tr:hover td{background:var(--surface2);}
+.prio-badge{display:inline-block;background:var(--red);color:#fff;font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px;letter-spacing:1px;}
+tr.is-prio td{background:rgba(248,113,113,0.18);}
+.rank{font-family:'IBM Plex Mono',monospace;color:var(--text-dim);font-weight:700;}
+.empty-msg{text-align:center;color:var(--text-dim);font-family:'IBM Plex Mono',monospace;padding:60px 20px;letter-spacing:1px;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <img src="logo.png" alt="RUBIO">
+    <h1 id="areaTitle">SNAPSHOT DE ÁREA</h1>
+  </div>
+  <div class="meta">
+    <div id="areaName"></div>
+    <div id="fechaGen"></div>
+  </div>
+</div>
+
+<div class="container" id="app"></div>
+
+<script>
+const p = new URLSearchParams(window.location.search);
+const area = p.get('area') || '';
+const fecha = p.get('fecha') || '';
+const totalPiezas = parseInt(p.get('totalPiezas')) || 0;
+const totalOC = parseInt(p.get('totalOC')) || 0;
+const numClientes = parseInt(p.get('numClientes')) || 0;
+
+document.getElementById('areaName').textContent = area ? ('ÁREA: ' + area) : '';
+document.getElementById('fechaGen').textContent = fecha ? ('GENERADO: ' + fecha) : '';
+
+// porCliente: filas § , campos ¦ -> cliente¦numOC¦piezas
+function parseRows(raw){
+  const out=[];
+  if(!raw) return out;
+  const filas = raw.split('\u00A7');
+  for(let i=0;i<filas.length;i++){ out.push(filas[i].split('\u00A6')); }
+  return out;
+}
+const porCliente = parseRows(p.get('porCliente'));
+
+// urgentes (sin ordenar): prioPref¦fechaKey¦fechaTxt¦cli¦sede¦oc¦np¦cant¦prio
+const urgentesRaw = parseRows(p.get('urgentes'));
+// Ordenar en JS: prioridad primero (prioPref 0<1), luego fechaKey asc
+urgentesRaw.sort((a,b)=>{
+  const ka = (a[0]||'1') + (a[1]||'99991231');
+  const kb = (b[0]||'1') + (b[1]||'99991231');
+  return ka < kb ? -1 : (ka > kb ? 1 : 0);
+});
+// Top 10 con campos que usa la tabla: fechaTxt¦cli¦sede¦oc¦np¦cant¦prio
+const topUrgentes = urgentesRaw.slice(0,10).map(u=>[u[2],u[3],u[4],u[5],u[6],u[7],u[8]]);
+// Entrega más próxima: menor fechaKey real (ignora 99991231)
+let proxEntrega = '—', menorKey = '99991231';
+for (const u of urgentesRaw) {
+  const k = u[1] || '99991231';
+  if (k !== '99991231' && k < menorKey) { menorKey = k; proxEntrega = u[2]; }
+}
+
+const app = document.getElementById('app');
+
+if (totalOC === 0) {
+  app.innerHTML = '<div class="empty-msg">No hay órdenes activas en esta área en este momento.</div>';
+} else {
+  const fmt = n => (parseInt(n)||0).toLocaleString('es-MX');
+
+  // Tabla por cliente+sede (ordenada por piezas desc) -> cliente¦sede¦numOC¦piezas
+  const cliRows = [...porCliente].sort((a,b)=> (parseInt(b[3])||0)-(parseInt(a[3])||0));
+  const cliHTML = cliRows.map(c=>`
+    <tr><td>${c[0]||''}</td><td>${c[1]||''}</td><td class="num">${fmt(c[2])}</td><td class="num">${fmt(c[3])}</td></tr>
+  `).join('');
+
+  // Top urgentes
+  const urgHTML = topUrgentes.map((u,i)=>{
+    const esPrio = (u[6]||'') === 'Si';
+    return `
+      <tr class="${esPrio?'is-prio':''}">
+        <td class="rank">${i+1}</td>
+        <td>${u[0]||''} ${esPrio?'<span class="prio-badge">PRIORIDAD</span>':''}</td>
+        <td>${u[1]||''}</td>
+        <td>${u[2]||''}</td>
+        <td>${u[3]||''}</td>
+        <td>${u[4]||''}</td>
+        <td class="num">${fmt(u[5])}</td>
+      </tr>`;
+  }).join('');
+
+  app.innerHTML = `
+    <div class="cards">
+      <div class="card c-blue"><div class="label">Total Piezas</div><div class="value">${fmt(totalPiezas)}</div></div>
+      <div class="card c-green"><div class="label">Clientes</div><div class="value">${numClientes}</div></div>
+      <div class="card c-amber"><div class="label">Órdenes de Compra</div><div class="value">${totalOC}</div></div>
+      <div class="card c-red"><div class="label">Entrega más Próxima</div><div class="value" style="font-size:20px;">${proxEntrega}</div></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Resumen por Cliente</div>
+      <table>
+        <thead><tr><th>Cliente</th><th>Sede</th><th style="text-align:right">Órdenes</th><th style="text-align:right">Piezas Solicitadas</th></tr></thead>
+        <tbody>${cliHTML}</tbody>
+      </table>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Top 10 Más Urgentes</div>
+      <table>
+        <thead><tr><th>#</th><th>Fecha Entrega</th><th>Cliente</th><th>Sede</th><th>OC / Línea</th><th>No. Parte</th><th style="text-align:right">Cantidad</th></tr></thead>
+        <tbody>${urgHTML}</tbody>
+      </table>
+    </div>
+  `;
+}
+</script>
+
+</body>
+</html>

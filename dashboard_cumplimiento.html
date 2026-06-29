@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cumplimiento de Entregas</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap');
+:root{
+  --bg:#0c0f14; --surface:#141820; --surface2:#1a2030; --border:#2a3348;
+  --accent:#3b82f6; --text:#e2e8f0; --text-dim:#64748b;
+  --green:#22c55e; --amber:#f59e0b; --red:#ef4444; --purple:#a855f7;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+.header{background:linear-gradient(135deg,var(--surface) 0%,var(--surface2) 100%);border-bottom:1px solid var(--border);padding:18px 28px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;}
+.header-left{display:flex;align-items:center;gap:16px;}
+.header-left img{height:38px;width:auto;}
+.header h1{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:700;color:var(--accent);letter-spacing:2px;}
+.header .meta{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text-dim);letter-spacing:1.5px;text-align:right;}
+.container{max-width:1280px;margin:0 auto;padding:24px;}
+.cards{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:26px;}
+.card{flex:1;min-width:160px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 20px;}
+.card .label{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:1.5px;color:var(--text-dim);text-transform:uppercase;margin-bottom:8px;}
+.card .value{font-family:'IBM Plex Mono',monospace;font-size:28px;font-weight:700;}
+.card.c-green .value{color:var(--green);}
+.card.c-red .value{color:var(--red);}
+.card.c-amber .value{color:var(--amber);}
+.card.c-blue .value{color:var(--accent);}
+.card .sub{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-dim);margin-top:4px;}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px;margin-bottom:24px;}
+.panel-title{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+.panel-title::before{content:'';width:4px;height:16px;background:var(--accent);border-radius:2px;}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+th{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);text-align:left;padding:9px 10px;border-bottom:1px solid var(--border);}
+td{padding:9px 10px;border-bottom:1px solid var(--border);}
+td.num{text-align:right;font-family:'IBM Plex Mono',monospace;}
+tr:hover td{background:var(--surface2);}
+.rank{font-family:'IBM Plex Mono',monospace;color:var(--text-dim);font-weight:700;}
+.badge{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px;letter-spacing:0.5px;}
+.b-out{background:rgba(168,85,247,0.2);color:#c084fc;}
+tr.is-out td{background:rgba(168,85,247,0.07);}
+.dias-late{color:#f87171;font-weight:700;}
+.note{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-dim);margin-top:10px;line-height:1.5;}
+.empty-msg{text-align:center;color:var(--text-dim);font-family:'IBM Plex Mono',monospace;padding:60px 20px;letter-spacing:1px;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <img src="logo.png" alt="RUBIO">
+    <h1>CUMPLIMIENTO DE ENTREGAS</h1>
+  </div>
+  <div class="meta"><div id="periodoLabel"></div><div id="fechaGen"></div></div>
+</div>
+
+<div class="container" id="app"></div>
+
+<script>
+const p = new URLSearchParams(window.location.search);
+const periodo = p.get('periodo') || '';
+const fechaGen = p.get('fecha') || '';
+const ontime = parseInt(p.get('ontime')) || 0;
+const retraso = parseInt(p.get('retraso')) || 0;
+const proceso = parseInt(p.get('proceso')) || 0;
+const prom = p.get('prom') || '0';
+const nincl = parseInt(p.get('nincl')) || 0;
+const noutliers = parseInt(p.get('noutliers')) || 0;
+const umbral = p.get('umbral') || '30';
+
+document.getElementById('periodoLabel').textContent = periodo ? ('PERÍODO: ' + periodo) : '';
+document.getElementById('fechaGen').textContent = fechaGen ? ('GENERADO: ' + fechaGen) : '';
+
+function parseRows(raw){
+  const out=[]; if(!raw) return out;
+  const filas = raw.split('\u00A7');
+  for(let i=0;i<filas.length;i++){ out.push(filas[i].split('\u00A6')); }
+  return out;
+}
+
+// porCliente: cli¦tot¦ont¦tar¦prom
+const porCliente = parseRows(p.get('porCliente'));
+// retrasadas: oc¦dias¦cli
+const retrasadas = parseRows(p.get('retrasadas'));
+
+const app = document.getElementById('app');
+const totalEval = ontime + retraso;
+
+if(totalEval === 0){
+  app.innerHTML = '<div class="empty-msg">No hay órdenes para el período seleccionado.</div>';
+} else {
+  const pctOntime = totalEval > 0 ? Math.round(ontime/totalEval*100) : 0;
+
+  // Ordenar retrasadas por días desc y tomar top 30
+  const orden = retrasadas
+    .map(r=>({oc:r[0]||'', dias:parseInt(r[1])||0, cli:r[2]||''}))
+    .sort((a,b)=>b.dias-a.dias)
+    .slice(0,30);
+
+  const topHTML = orden.map((r,i)=>{
+    const esOut = r.dias > parseInt(umbral);
+    return `<tr class="${esOut?'is-out':''}">
+      <td class="rank">${i+1}</td>
+      <td>${r.oc}</td>
+      <td>${r.cli}</td>
+      <td class="num"><span class="dias-late">+${r.dias}</span> ${esOut?'<span class="badge b-out">EXCLUIDO</span>':''}</td>
+    </tr>`;
+  }).join('');
+
+  const cliRows = porCliente
+    .map(c=>({cli:c[0]||'', tot:parseInt(c[1])||0, ont:parseInt(c[2])||0, tar:parseInt(c[3])||0, prom:c[4]||'0'}))
+    .sort((a,b)=>b.tar-a.tar);
+  const cliHTML = cliRows.map(c=>`
+    <tr><td>${c.cli}</td><td class="num">${c.tot}</td><td class="num">${c.ont}</td><td class="num">${c.tar}</td><td class="num">${c.tar>0?c.prom:'—'}</td></tr>
+  `).join('');
+
+  app.innerHTML = `
+    <div class="cards">
+      <div class="card c-green"><div class="label">A Tiempo</div><div class="value">${ontime}</div><div class="sub">${pctOntime}% de ${totalEval}</div></div>
+      <div class="card c-red"><div class="label">Con Retraso</div><div class="value">${retraso}</div></div>
+      <div class="card c-amber"><div class="label">Prom. Retraso</div><div class="value">${prom}</div><div class="sub">días · ${nincl} órdenes</div></div>
+      <div class="card c-blue"><div class="label">En Proceso (tarde)</div><div class="value">${proceso}</div></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Resumen por Cliente</div>
+      <table>
+        <thead><tr><th>Cliente</th><th style="text-align:right">Órdenes</th><th style="text-align:right">A tiempo</th><th style="text-align:right">Con retraso</th><th style="text-align:right">Prom. retraso (días)</th></tr></thead>
+        <tbody>${cliHTML}</tbody>
+      </table>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Top 30 Más Atrasadas</div>
+      <table>
+        <thead><tr><th>#</th><th>OC / Línea</th><th>Cliente</th><th style="text-align:right">Días de retraso</th></tr></thead>
+        <tbody>${topHTML}</tbody>
+      </table>
+      <div class="note">${noutliers>0 ? ('⚠ '+noutliers+' orden(es) excluida(s) del promedio por superar '+umbral+' días de retraso (marcadas EXCLUIDO).') : ('Promedio calculado sobre retrasos de hasta '+umbral+' días.')}</div>
+    </div>
+  `;
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hoja de Tarima</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap');
+
+        :root {
+            --bg: #0c0f14;
+            --surface: #141820;
+            --surface2: #1a2030;
+            --border: #2a3348;
+            --amber: #3b82f6;
+            --text: #e2e8f0;
+            --text-dim: #64748b;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .screen-header {
+            width: 100%;
+            background: linear-gradient(135deg, var(--surface) 0%, var(--surface2) 100%);
+            border-bottom: 1px solid var(--border);
+            padding: 14px 24px;
+        }
+        .screen-header h1 {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 15px; font-weight: 700;
+            color: var(--amber); letter-spacing: 1.5px;
+        }
+        .screen-header span {
+            font-size: 11px; color: var(--text-dim);
+            font-family: 'IBM Plex Mono', monospace;
+            letter-spacing: 2px;
+        }
+
+        .screen-controls {
+            width: 100%;
+            max-width: 900px;
+            padding: 20px;
+        }
+        .btn-print {
+            width: 100%;
+            padding: 14px;
+            font-size: 15px;
+            font-weight: 700;
+            font-family: 'IBM Plex Mono', monospace;
+            letter-spacing: 1px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background: linear-gradient(135deg, var(--amber), #2563eb);
+            color: #fff;
+            transition: all 0.2s;
+        }
+        .btn-print:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(59,130,246,0.3);
+        }
+
+        /* ── Print Document ── */
+        .print-area {
+            width: 216mm;
+            min-height: 279mm;
+            background: #fff;
+            color: #000;
+            padding: 8mm 12mm;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 12px;
+            margin: 20px auto;
+            box-shadow: 0 4px 30px rgba(0,0,0,0.5);
+        }
+
+        .doc-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border: 2px solid #000;
+            padding: 6px 12px;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        .doc-top-left {
+            font-size: 14px;
+            font-weight: 900;
+        }
+
+        .doc-top-center {
+            text-align: center;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .doc-top-right {
+            text-align: right;
+            font-size: 12px;
+        }
+
+        .doc-sender {
+            border: 2px solid #000;
+            border-top: none;
+            padding: 4px 12px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .doc-address {
+            border: 2px solid #000;
+            border-top: none;
+            padding: 4px 12px;
+            font-size: 10px;
+            line-height: 1.4;
+        }
+
+        .doc-dest-label {
+            border: 2px solid #000;
+            border-top: none;
+            padding: 3px 12px;
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+        .doc-dest-address {
+            border: 2px solid #000;
+            border-top: none;
+            padding: 4px 12px;
+            font-size: 10px;
+            line-height: 1.4;
+        }
+
+        /* Table */
+        .doc-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: -2px;
+            font-size: 11px;
+        }
+        .doc-table thead { display: table-header-group; }
+        .doc-table tr { page-break-inside: avoid; }
+        .doc-table th {
+            background: #e8e8e8;
+            border: 1.5px solid #000;
+            padding: 4px 3px;
+            font-size: 9.5px;
+            font-weight: 800;
+            text-transform: uppercase;
+            text-align: center;
+            letter-spacing: 0.5px;
+        }
+        .doc-table td {
+            border: 1px solid #000;
+            padding: 3px 4px;
+            text-align: center;
+            font-size: 11px;
+            height: 18px;
+        }
+        .doc-table td.left { text-align: left; }
+
+        @media print {
+            @page { size: letter landscape; margin: 8mm; }
+            body { background: #fff; margin: 0; padding: 0; }
+            .screen-header, .screen-controls { display: none !important; }
+            .print-area {
+                width: 100%;
+                margin: 0;
+                padding: 8mm 10mm;
+                box-shadow: none;
+                min-height: auto;
+            }
+        }
+
+        /* ── Layout Packing Delaware ── */
+        .dw-header {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 18px;
+            padding: 8px 0 4px 0;
+        }
+        .dw-header .dw-side {
+            font-family: Georgia, 'Times New Roman', serif;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-align: center;
+            line-height: 1.5;
+        }
+        .dw-header .dw-logo {
+            font-family: Georgia, 'Times New Roman', serif;
+            font-size: 64px;
+            font-weight: 700;
+            letter-spacing: 4px;
+            line-height: 1;
+        }
+        .dw-meta {
+            text-align: right;
+            font-size: 11px;
+            margin: 2px 30mm 6px 0;
+            line-height: 1.5;
+        }
+        .dw-shipto {
+            width: 90mm;
+            margin: 0 0 8px 28mm;
+            border: 1px solid #000;
+            font-size: 10px;
+        }
+        .dw-shipto .st-title {
+            background: #c8c8c8;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-bottom: 1px solid #000;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        .dw-shipto .st-row {
+            padding: 2px 6px;
+            border-bottom: 1px solid #000;
+        }
+        .dw-shipto .st-address {
+            padding: 3px 6px;
+            text-align: center;
+            line-height: 1.6;
+        }
+        .dw-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 10px;
+        }
+        .dw-table th {
+            border: 1.5px solid #000;
+            padding: 3px 4px;
+            font-size: 9.5px;
+            font-weight: 800;
+            text-transform: uppercase;
+            text-align: center;
+        }
+        .dw-table td {
+            border: 1px solid #000;
+            padding: 2px 4px;
+            text-align: center;
+            font-size: 10px;
+            height: 15px;
+        }
+        .dw-notes {
+            margin-top: 10mm;
+        }
+        .dw-notes .nt-label {
+            display: inline-block;
+            border: 1px solid #000;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 14px;
+            margin-bottom: -1px;
+            background: #fff;
+            position: relative;
+            z-index: 1;
+        }
+        .dw-notes .nt-box {
+            border: 1px solid #000;
+            padding: 8px 12px 12px 12px;
+            display: flex;
+            gap: 24px;
+        }
+        .dw-notes .nt-left { flex: 1; }
+        .dw-notes .nt-pallet {
+            background: #FFC000;
+            font-weight: 800;
+            text-align: center;
+            padding: 3px;
+            font-size: 12px;
+            margin-bottom: 8px;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        .dw-notes .nt-dim-title {
+            text-align: center;
+            font-size: 10px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+        .dw-notes .nt-dim-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            padding: 1px 16px;
+        }
+        .dw-notes .nt-right {
+            flex: 1;
+            text-align: center;
+            font-size: 11px;
+            padding-top: 14px;
+            line-height: 1.8;
+        }
+
+        /* ── Layout DHL ── */
+        .dhl-title {
+            text-align: center;
+            font-size: 22px;
+            font-weight: 900;
+            letter-spacing: 2px;
+            margin: 10mm 0 8mm 0;
+        }
+        .dhl-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+        .dhl-table th {
+            background: #e8e8e8;
+            border: 1.5px solid #000;
+            padding: 5px 4px;
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            text-align: center;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        .dhl-table td {
+            border: 1px solid #000;
+            padding: 4px 5px;
+            text-align: center;
+            font-size: 12px;
+            height: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="screen-header">
+        <div>
+            <h1>HOJA DE TARIMA</h1>
+            <span>GENERAR PDF · EMPAQUE</span>
+        </div>
+    </div>
+
+    <div class="screen-controls">
+        <button class="btn-print" onclick="window.print()">🖨️&nbsp;&nbsp;IMPRIMIR / GUARDAR PDF</button>
+    </div>
+
+    <div class="print-area">
+        <div class="doc-top" id="docTop">
+            <div class="doc-top-left" id="docDestName">—</div>
+            <div class="doc-top-center" id="docTarima">—</div>
+            <div class="doc-top-right" id="docFecha">—</div>
+        </div>
+
+        <div class="doc-sender" id="docSender">DANIEL RUBIO LOPEZ</div>
+
+        <div class="doc-address">
+            MAQUINADOS ESPECIALES RUBIO LAGO ISEO 252 COL ANAHUAC PRIMERA SECCION, DELEGACION MIGUEL HIDALGO CP. 11320, CIUDAD DE MEXICO<br>
+            TEL. 5552545617
+        </div>
+
+        <div class="doc-dest-label">DESTINATARIO</div>
+        <div class="doc-dest-address" id="docDestAddress">—</div>
+
+        <table class="doc-table">
+            <thead>
+                <tr>
+                    <th style="width:100px;">Orden de Compra</th>
+                    <th style="width:55px;">Línea</th>
+                    <th>Número de Parte</th>
+                    <th style="width:65px;">Cantidad</th>
+                    <th style="width:85px;">No. de Factura</th>
+                    <th style="width:70px;">No. Paquetes</th>
+                </tr>
+            </thead>
+            <tbody id="docBody"></tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="4" style="text-align:left; font-weight:700; padding: 4px 6px; border: 1px solid #000;">
+                        TOTAL DE PESO: <span id="docPeso">—</span>
+                    </td>
+                    <td colspan="2" style="text-align:left; font-weight:700; padding: 4px 6px; border: 1px solid #000;">
+                        TOTAL DE PAQUETES: <span id="docTotalPaquetes">—</span>
+                    </td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <div style="margin-top: 14mm; border-top: 1.5px solid #000; padding-top: 4px; font-size: 12px; font-weight: 700;">
+            NOMBRE Y FIRMA DE QUIEN RECIBE: _______________________________________________
+        </div>
+    </div>
+
+<script>
+    // ══════════════════════════════════════════════════════════
+    //  DESTINOS POR TARIMA
+    // ══════════════════════════════════════════════════════════
+
+    const colores = {
+        'Tarima 1':          '#0563C1',
+        'Tarima 2':          '#92D050',
+        'Tarima 3':          '#FFC000',
+        'Tarima 4':          '#FF6600',
+        'Tarima 5':          '#FFFF00',
+        'Tarima 6':          '#D999DB',
+        'Tarima 7':          '#FF99CC',
+        'Tarima 8':          '#00B050',
+        'Tarima 9':          '#FF0000',
+        'Tarima 10':         '#0000CD',
+        'Tarima 11':         '#000000',
+        'Tarima 12':         '#E74B4B',
+        'Tarima 13':         '#996633',
+        'Tarima 14':         '#0563C1',
+        'Tarima 15':         '#70AD47',
+        'Reynosa':           '#FFFF00',
+        'Reynosa P.M':       '#FFFF00',
+        'Mex Prioridad AM':  '#FF0000',
+        'Mex Prioridad PM':  '#FF0000',
+        'Monterrey':         '#92D050',
+        'Appleton':          '#954F72',
+    };
+
+    // Nombre que aparece en el PDF (con -PRIORIDAD para tarimas)
+    function getTarimaLabel(tarima) {
+        const match = tarima.match(/^Tarima (\d+)$/);
+        if (match) return 'Tarima ' + match[1] + ' - Prioridad';
+        if (tarima === 'Reynosa') return 'PRIORIDAD';
+        if (tarima === 'Reynosa P.M') return 'PRIORIDAD P.M.';
+        if (tarima === 'Mex Prioridad AM') return 'PRIORIDAD';
+        if (tarima === 'Mex Prioridad PM') return 'PRIORIDAD P.M';
+        if (tarima === 'Monterrey') return '1ER ENVIO';
+        if (tarima === 'Appleton') return '1ER ENVIO';
+        return tarima;
+    }
+
+    const destinos = {
+        mexicali: {
+            nombre: "MEXICALI-TORRES",
+            direccion: "VERTIV MEXICALI, INDUSTRIA DE LA ELECTRONICA 44-70 EL VIGIA CP. 21397 PARQUE INDUSTRIAL EL VIGIA MEXICALI BAJA CALIFORNIA MEXICO"
+        },
+        reynosa: {
+            nombre: "REYNOSA-TORRES",
+            direccion: "EMERPOWSYS-ESNA, AVE INDUSTRIAL REYNOSA NO.EXTERIOR LOTE G-12 REYNOSA, INDUSTRIAL CENTER CP. 88780, REYNOSA TAMAULIPAS, MEXICO"
+        },
+        monterrey: {
+            nombre: "VERTIV MTY-TORRES",
+            direccion: "AV. LUIS GUADALUPE FERNANDEZ TALAMANTE No. 3502, PARQUE FINSA, SANTA CATARINA, C.P. 66380, NUEVO LEON MEXICO."
+        },
+        appleton: {
+            nombre: "APPLETON-TORRES",
+            direccion: "VIA MONTERREY MATAMOROS N.598, PARQUE INDUSTRIAL MILENIUM, APODACA, C.P. 66626. MONTERREY"
+        }
+    };
+
+    function getDestino(tarima) {
+        const t = tarima.toLowerCase();
+        if (t.includes('reynosa')) return destinos.reynosa;
+        if (t.includes('monterrey')) return destinos.monterrey;
+        if (t.includes('appleton')) return destinos.appleton;
+        return destinos.mexicali; // Tarimas 1-15, Mex Prioridad
+    }
+
+    // ══════════════════════════════════════════════════════════
+    //  LEER DATOS
+    // ══════════════════════════════════════════════════════════
+
+    function getData() {
+        const p = new URLSearchParams(window.location.search);
+        const header = {
+            tarima: p.get('tarima') || '',
+            fecha: p.get('fecha') || new Date().toLocaleDateString('es-MX'),
+            operador: p.get('oper') || '',
+            peso: p.get('peso') || '',
+            numTarima: p.get('nt') || '',
+            tamano: p.get('tt') || '',
+            boarding: p.get('bn') || '',
+        };
+        let partidas = [];
+        const jsonParam = p.get('partidas');
+        if (jsonParam) {
+            try {
+                partidas = JSON.parse(decodeURIComponent(jsonParam));
+            } catch(e) {
+                console.error('Error parsing partidas:', e);
+            }
+        }
+        return { header, partidas };
+    }
+
+    const { header, partidas } = getData();
+
+    // ── Formatear fecha como "Martes 09 de junio del 2026" ──
+    function parseFecha(fechaStr) {
+        const m = (fechaStr || '').match(/(\d{1,2})\s*\/\s*(\d{1,2})\s*\/\s*(\d{4})/);
+        if (m) {
+            return new Date(parseInt(m[3]), parseInt(m[2]) - 1, parseInt(m[1]));
+        }
+        return new Date();
+    }
+    function formatearFechaLarga(fechaStr) {
+        const d = parseFecha(fechaStr);
+        const dias = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+        const meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+        const dd = String(d.getDate()).padStart(2, '0');
+        return dias[d.getDay()] + ' ' + dd + ' de ' + meses[d.getMonth()] + ' del ' + d.getFullYear();
+    }
+    // ── Fecha en inglés: "Tuesday, June 09, 2026" (Packing Delaware) ──
+    function formatearFechaIngles(fechaStr) {
+        const d = parseFecha(fechaStr);
+        const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+        const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+        const dd = String(d.getDate()).padStart(2, '0');
+        return days[d.getDay()] + ', ' + months[d.getMonth()] + ' ' + dd + ', ' + d.getFullYear();
+    }
+    const fechaOriginal = header.fecha;
+    header.fecha = formatearFechaLarga(fechaOriginal);
+    header.fechaEN = formatearFechaIngles(fechaOriginal);
+
+    // ══════════════════════════════════════════════════════════
+    //  LAYOUTS ESPECIALES: PACKING DELAWARE Y DHL
+    // ══════════════════════════════════════════════════════════
+
+    function splitOC(ocLinea) {
+        let oc = ocLinea || '';
+        let linea = '';
+        const m = oc.match(/^(.+?)(L\d+)$/i);
+        if (m) { oc = m[1]; linea = m[2]; }
+        return { oc, linea };
+    }
+
+    function ultimaFacturaDe(facturaStr) {
+        const fs = (facturaStr || '').split(',').map(f => f.trim()).filter(Boolean);
+        return fs.length > 0 ? fs[fs.length - 1] : '';
+    }
+
+    const tarimaLower = (header.tarima || '').toLowerCase();
+
+    if (tarimaLower.startsWith('packing delaware')) {
+        const st = document.createElement('style');
+        st.textContent = '@media print { @page { size: letter portrait; } }';
+        document.head.appendChild(st);
+        renderDelaware();
+    } else if (tarimaLower.startsWith('packing ironton')) {
+        const st = document.createElement('style');
+        st.textContent = '@media print { @page { size: letter portrait; } }';
+        document.head.appendChild(st);
+        renderIronton();
+    } else if (tarimaLower === 'dhl') {
+        const st = document.createElement('style');
+        st.textContent = '@media print { @page { size: letter portrait; } }';
+        document.head.appendChild(st);
+        renderDHL();
+    } else {
+        renderDefault();
+    }
+
+    // ── PACKING DELAWARE ──
+    function renderDelaware() {
+        const tamanos = {
+            'pequeña':  { depth: 60,  width: 54,  height: 40, peso: 7.4 },
+            'pequena':  { depth: 60,  width: 54,  height: 40, peso: 7.4 },
+            'chica':    { depth: 60,  width: 54,  height: 40, peso: 7.4 },
+            'mediana':  { depth: 60,  width: 103, height: 40, peso: 13 },
+            'grande':   { depth: 120, width: 100, height: 40, peso: 23.8 },
+        };
+        const tam = tamanos[(header.tamano || '').toLowerCase()] || tamanos['chica'];
+
+        // Número de calle según la opción de tarima (Packing Delaware 1932 / 975)
+        const numMatch = (header.tarima || '').match(/(\d+)\s*$/);
+        const numCalle = numMatch ? numMatch[1] : '1932';
+
+        // Filas de la tabla
+        let rows = '';
+        let totalPaquetes = 0;
+        let pesoUnitarios = 0;
+        for (let i = 0; i < partidas.length; i++) {
+            const p = partidas[i];
+            const { oc, linea } = splitOC(p.ocLinea || '');
+            const inv = ultimaFacturaDe(p.factura);
+            const paq = parseFloat(p.paquetes) || 0;
+            const cant = parseFloat(p.cantidad) || 0;
+            const pu = parseFloat(p.pu) || 0;
+            totalPaquetes += paq;
+            pesoUnitarios += pu * cant;
+            rows += `<tr>
+                <td>${oc}</td>
+                <td>BUSBAR</td>
+                <td>${p.numeroParte || ''}</td>
+                <td>${linea}</td>
+                <td>${p.cantidad || ''}</td>
+                <td>${p.paquetes || ''}</td>
+                <td>${inv}</td>
+            </tr>`;
+        }
+        // Filas vacías hasta llenar 25
+        for (let i = partidas.length; i < 25; i++) {
+            rows += `<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>`;
+        }
+
+        const pesoTotal = (pesoUnitarios + tam.peso).toFixed(1);
+        const palletNum = header.numTarima || '1';
+
+        document.querySelector('.print-area').innerHTML = `
+            <div class="dw-header">
+                <div class="dw-side">MAQUINADOS<br>ESPECIALES</div>
+                <img src="logo.png" alt="RUBIO" style="height:58px; width:auto;">
+                <div class="dw-side">ESTABLECIDO<br>EN 1970</div>
+            </div>
+            <div class="dw-meta">
+                Date: &nbsp;&nbsp; ${header.fechaEN}<br>
+                BOARDING NUMBER ${header.boarding}
+            </div>
+            <div class="dw-shipto">
+                <div class="st-title">Ship To / Envio a :</div>
+                <div class="st-row">Company Name / VERTIV CORPORATION</div>
+                <div class="st-row">Buyer's Name / Rowena Salvador Carter</div>
+                <div class="st-row">Address :</div>
+                <div class="st-address">
+                    Vertiv Corporation<br>
+                    ${numCalle} Pittsburgh Drive<br>
+                    Delaware, OH 43015<br>
+                    United States
+                </div>
+            </div>
+            <table class="dw-table">
+                <thead>
+                    <tr>
+                        <th style="width:90px;">PO</th>
+                        <th>DESCRIPTION</th>
+                        <th style="width:85px;">ITEM</th>
+                        <th style="width:60px;">LINE</th>
+                        <th style="width:50px;">QTY</th>
+                        <th style="width:65px;">PACKAGE</th>
+                        <th style="width:70px;">INVOICE</th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>
+            <div class="dw-notes">
+                <div class="nt-label">NOTES :</div>
+                <div class="nt-box">
+                    <div class="nt-left">
+                        <div class="nt-pallet">PALLET ${palletNum}</div>
+                        <div class="nt-dim-title">PALLET DIMENSIONS</div>
+                        <div class="nt-dim-row"><span>Depth</span><span>${tam.depth} cm</span></div>
+                        <div class="nt-dim-row"><span>Width</span><span>${tam.width} cm</span></div>
+                        <div class="nt-dim-row"><span>Height</span><span>${tam.height} cm</span></div>
+                    </div>
+                    <div class="nt-right">
+                        Pallet with ${totalPaquetes} packages<br>
+                        Weight &nbsp;${pesoTotal} KG
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // ── PACKING IRONTON ──
+    function renderIronton() {
+        const tamanos = {
+            'pequeña':  { depth: 60,  width: 54,  height: 40, peso: 7.4 },
+            'pequena':  { depth: 60,  width: 54,  height: 40, peso: 7.4 },
+            'chica':    { depth: 60,  width: 54,  height: 40, peso: 7.4 },
+            'mediana':  { depth: 60,  width: 103, height: 40, peso: 13 },
+            'grande':   { depth: 120, width: 100, height: 40, peso: 23.8 },
+        };
+        const tam = tamanos[(header.tamano || '').toLowerCase()] || tamanos['chica'];
+
+        let rows = '';
+        let totalPaquetes = 0;
+        let pesoUnitarios = 0;
+        for (let i = 0; i < partidas.length; i++) {
+            const p = partidas[i];
+            const { oc, linea } = splitOC(p.ocLinea || '');
+            const inv = ultimaFacturaDe(p.factura);
+            const paq = parseFloat(p.paquetes) || 0;
+            const cant = parseFloat(p.cantidad) || 0;
+            const pu = parseFloat(p.pu) || 0;
+            totalPaquetes += paq;
+            pesoUnitarios += pu * cant;
+            rows += `<tr>
+                <td>${oc}</td>
+                <td>BUSBAR</td>
+                <td>${p.numeroParte || ''}</td>
+                <td>${linea}</td>
+                <td>${p.cantidad || ''}</td>
+                <td>${p.paquetes || ''}</td>
+                <td>${inv}</td>
+            </tr>`;
+        }
+        for (let i = partidas.length; i < 25; i++) {
+            rows += `<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>`;
+        }
+
+        const pesoTotal = (pesoUnitarios + tam.peso).toFixed(1);
+        const palletNum = header.numTarima || '1';
+
+        document.querySelector('.print-area').innerHTML = `
+            <div class="dw-header">
+                <div class="dw-side">MAQUINADOS<br>ESPECIALES</div>
+                <img src="logo.png" alt="RUBIO" style="height:58px; width:auto;">
+                <div class="dw-side">ESTABLECIDO<br>EN 1970</div>
+            </div>
+            <div class="dw-meta">
+                Date: &nbsp;&nbsp; ${header.fechaEN}<br>
+                BOARDING NUMBER ${header.boarding}
+            </div>
+            <div class="dw-shipto">
+                <div class="st-title">Ship To / Envio a :</div>
+                <div class="st-row">Company Name / VERTIV CORPORATION</div>
+                <div class="st-row">Buyer's Name / VICTOR TREVIÑO</div>
+                <div class="st-row">Address :</div>
+                <div class="st-address">
+                    Vertiv Corporation<br>
+                    3040 South 9th Street<br>
+                    Ironton, OH 45638<br>
+                    United States
+                </div>
+            </div>
+            <table class="dw-table">
+                <thead>
+                    <tr>
+                        <th style="width:90px;">PO</th>
+                        <th>DESCRIPTION</th>
+                        <th style="width:85px;">ITEM</th>
+                        <th style="width:60px;">LINE</th>
+                        <th style="width:50px;">QTY</th>
+                        <th style="width:65px;">PACKAGE</th>
+                        <th style="width:70px;">INVOICE</th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>
+            <div class="dw-notes">
+                <div class="nt-label">NOTES :</div>
+                <div class="nt-box">
+                    <div class="nt-left">
+                        <div class="nt-pallet">PALLET ${palletNum}</div>
+                        <div class="nt-dim-title">PALLET DIMENSIONS</div>
+                        <div class="nt-dim-row"><span>Depth</span><span>${tam.depth} cm</span></div>
+                        <div class="nt-dim-row"><span>Width</span><span>${tam.width} cm</span></div>
+                        <div class="nt-dim-row"><span>Height</span><span>${tam.height} cm</span></div>
+                    </div>
+                    <div class="nt-right">
+                        Pallet with ${totalPaquetes} packages<br>
+                        Weight &nbsp;${pesoTotal} KG
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // ── DHL ──
+    function renderDHL() {
+        let rows = '';
+        for (let i = 0; i < partidas.length; i++) {
+            const p = partidas[i];
+            const { oc, linea } = splitOC(p.ocLinea || '');
+            rows += `<tr>
+                <td>${oc}</td>
+                <td>${linea}</td>
+                <td>${p.cantidad || ''}</td>
+                <td>${p.paquetes || ''}</td>
+            </tr>`;
+        }
+
+        document.querySelector('.print-area').innerHTML = `
+            <div class="dhl-title">ENVIADO POR DHL</div>
+            <div style="text-align:right; font-size:12px; margin-bottom:6px;">FECHA: ${header.fecha}</div>
+            <table class="dhl-table">
+                <thead>
+                    <tr>
+                        <th style="width:150px;">PO</th>
+                        <th style="width:90px;">LÍNEA</th>
+                        <th style="width:110px;">CANTIDAD</th>
+                        <th style="width:110px;">PAQUETES</th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>
+        `;
+    }
+
+    // ── LAYOUT ORIGINAL (TARIMAS / DESTINOS) ──
+    function renderDefault() {
+
+    const destino = getDestino(header.tarima);
+
+    // ══════════════════════════════════════════════════════════
+    //  RENDER
+    // ══════════════════════════════════════════════════════════
+
+    document.getElementById('docDestName').textContent = destino.nombre;
+    document.getElementById('docTarima').textContent = getTarimaLabel(header.tarima);
+    document.getElementById('docFecha').textContent = header.fecha;
+    document.getElementById('docSender').textContent = 'DANIEL RUBIO LOPEZ';
+    document.getElementById('docDestAddress').textContent = destino.direccion;
+
+    // Aplicar color de la tarima al encabezado
+    const color = colores[header.tarima] || '#FFFFFF';
+    const topEl = document.getElementById('docTop');
+    if (color !== '#FFFFFF') {
+        topEl.style.backgroundColor = color;
+        // Texto oscuro o claro según el fondo
+        const dark = ['#00B050', '#996633', '#E74B4B', '#FF0000', '#EC18D3', '#0563C1', '#70AD47', '#954F72', '#FF6600', '#0000CD', '#000000'];
+        if (dark.includes(color)) {
+            topEl.style.color = '#FFFFFF';
+        }
+    }
+
+    const tbody = document.getElementById('docBody');
+
+    for (let i = 0; i < partidas.length; i++) {
+        const tr = document.createElement('tr');
+        const p = partidas[i];
+
+        // Separar OC y Linea del ocLinea
+        let oc = p.ocLinea || '';
+        let linea = '';
+        const match = oc.match(/^(.+?)(L\d+)$/i);
+        if (match) {
+            oc = match[1];
+            linea = match[2];
+        }
+
+        // Si hay varias facturas (ej. "FAC001, FAC003"), tomar solo la última
+        const facturas = (p.factura || '').split(',').map(f => f.trim()).filter(Boolean);
+        const ultimaFactura = facturas.length > 0 ? facturas[facturas.length - 1] : '';
+
+        tr.innerHTML = `
+            <td>${oc}</td>
+            <td>${linea}</td>
+            <td class="left">${p.numeroParte || ''}</td>
+            <td>${p.cantidad || ''}</td>
+            <td>${ultimaFactura}</td>
+            <td>${p.paquetes || ''}</td>
+        `;
+        tbody.appendChild(tr);
+    }
+
+    // Peso manual desde URL
+    document.getElementById('docPeso').textContent = header.peso ? header.peso + ' Kg' : '—';
+
+    // Total paquetes
+    const totalPaquetes = partidas.reduce((sum, p) => sum + (parseFloat(p.paquetes) || 0), 0);
+    document.getElementById('docTotalPaquetes').textContent = totalPaquetes || '—';
+
+    } // fin renderDefault
+</script>
+
+</body>
+</html>

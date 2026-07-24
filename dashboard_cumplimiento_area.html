@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cumplimiento por Área — MERSA</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#0c0f14;
+    --panel:#141922;
+    --panel2:#1b2230;
+    --line:#263042;
+    --txt:#e6edf6;
+    --muted:#8ea0b8;
+    --accent:#3b82f6;
+    --ok:#22c55e;
+    --warn:#f59e0b;
+    --bad:#ef4444;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--txt);
+    font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+    padding:32px 20px;
+    min-height:100vh;
+  }
+  .wrap{max-width:960px;margin:0 auto;}
+  .head{
+    display:flex;align-items:baseline;justify-content:space-between;
+    border-bottom:1px solid var(--line);padding-bottom:16px;margin-bottom:28px;
+    flex-wrap:wrap;gap:8px;
+  }
+  .head h1{font-size:22px;font-weight:700;letter-spacing:.3px;}
+  .head .sub{color:var(--muted);font-size:13px;}
+  .area-name{color:var(--accent);font-weight:700;}
+  .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px;}
+  .card{
+    background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    padding:20px;text-align:center;
+  }
+  .card .num{font-size:34px;font-weight:800;line-height:1;}
+  .card .lbl{color:var(--muted);font-size:12px;margin-top:8px;text-transform:uppercase;letter-spacing:.5px;}
+  .pct-big{font-size:44px;}
+  .chart-panel{
+    background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    padding:24px;margin-bottom:20px;
+  }
+  .chart-panel h2{font-size:14px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:16px;}
+  .bar-wrap{position:relative;height:120px;}
+  .foot{color:var(--muted);font-size:12px;text-align:center;margin-top:18px;}
+  .empty{color:var(--muted);text-align:center;padding:40px;font-size:15px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <h1>Cumplimiento de Registros — <span class="area-name" id="areaName">—</span></h1>
+    <div class="sub" id="periodo">—</div>
+  </div>
+
+  <div id="content">
+    <div class="cards">
+      <div class="card">
+        <div class="num" id="cNum" style="color:var(--ok)">0</div>
+        <div class="lbl">Registradas por el área</div>
+      </div>
+      <div class="card">
+        <div class="num" id="cDen" style="color:var(--accent)">0</div>
+        <div class="lbl">Mandadas al área</div>
+      </div>
+      <div class="card">
+        <div class="num pct-big" id="cPct">0%</div>
+        <div class="lbl">Cumplimiento</div>
+      </div>
+      <div class="card">
+        <div class="num" id="cExc" style="color:var(--warn)">0</div>
+        <div class="lbl">Sin registro previo</div>
+      </div>
+    </div>
+
+    <div class="chart-panel" id="chartPanel">
+      <h2>Porcentaje de cumplimiento</h2>
+      <div class="bar-wrap">
+        <canvas id="barChart"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-panel" id="reportPanel" style="display:none;">
+      <h2>Reporte de cumplimiento</h2>
+      <table style="width:100%; border-collapse:collapse; font-size:14px;">
+        <tbody>
+          <tr style="border-bottom:1px solid var(--line);">
+            <td style="padding:12px 8px; color:var(--muted);">Área</td>
+            <td style="padding:12px 8px; text-align:right; font-weight:bold;" id="rArea">—</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--line);">
+            <td style="padding:12px 8px; color:var(--muted);">Periodo</td>
+            <td style="padding:12px 8px; text-align:right;" id="rPeriodo">—</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--line);">
+            <td style="padding:12px 8px; color:var(--muted);">Registradas por el área</td>
+            <td style="padding:12px 8px; text-align:right; font-weight:bold; color:var(--ok);" id="rNum">0</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--line);">
+            <td style="padding:12px 8px; color:var(--muted);">Mandadas al área</td>
+            <td style="padding:12px 8px; text-align:right; font-weight:bold; color:var(--accent);" id="rDen">0</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--line);">
+            <td style="padding:12px 8px; color:var(--muted);">Proporción</td>
+            <td style="padding:12px 8px; text-align:right; font-weight:bold;" id="rRatio">0/0</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--line);">
+            <td style="padding:12px 8px; color:var(--muted);">Sin registro previo (excluidas)</td>
+            <td style="padding:12px 8px; text-align:right; font-weight:bold; color:var(--warn);" id="rExc">0</td>
+          </tr>
+          <tr>
+            <td style="padding:12px 8px; color:var(--muted);">Cumplimiento</td>
+            <td style="padding:12px 8px; text-align:right; font-weight:bold; font-size:20px;" id="rPct">0%</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="chart-panel" id="excPanel" style="display:none;">
+      <h2>Órdenes registradas sin registro previo del área anterior</h2>
+      <table style="width:100%; border-collapse:collapse; font-size:13px;">
+        <thead>
+          <tr style="border-bottom:2px solid var(--line);">
+            <th style="padding:10px 8px; text-align:left; color:var(--muted);">Orden de Compra / Línea</th>
+            <th style="padding:10px 8px; text-align:left; color:var(--muted);">Número de Parte</th>
+          </tr>
+        </thead>
+        <tbody id="excTbody"></tbody>
+      </table>
+    </div>
+
+    <div class="foot" id="foot">—</div>
+  </div>
+</div>
+
+<script>
+  const p = new URLSearchParams(window.location.search);
+  const area = p.get('area') || '—';
+  const mes = parseInt(p.get('mes') || '0', 10);
+  const anio = p.get('anio') || '—';
+  const num = parseInt(p.get('num') || '0', 10);
+  const den = parseInt(p.get('den') || '0', 10);
+  let pct = parseFloat(p.get('pct') || '0');
+  if (isNaN(pct)) pct = 0;
+  pct = Math.round(pct * 10) / 10;
+  const modo = (p.get('modo') || 'grafica').toLowerCase();
+  const exc = parseInt(p.get('exc') || '0', 10);
+  // Lista de excluidas: filas §, campos ¦ -> oc¦np  (NO doble-decodificar)
+  const exclistRaw = p.get('exclist') || '';
+  const excItems = exclistRaw
+    ? exclistRaw.split('§').map(r => { const c = r.split('¦'); return { oc: c[0] || '', np: c[1] || '' }; })
+    : [];
+
+  const meses = ['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const mesTxt = (mes >= 1 && mes <= 12) ? meses[mes] : '—';
+
+  document.getElementById('areaName').textContent = area;
+  document.getElementById('periodo').textContent = mesTxt + ' ' + anio;
+  document.getElementById('cNum').textContent = num;
+  document.getElementById('cDen').textContent = den;
+  document.getElementById('cPct').textContent = pct + '%';
+  document.getElementById('cExc').textContent = exc;
+
+  // ── Lista de excluidas (si hay items; en ambos modos) ──
+  if (excItems.length > 0) {
+    const tb = document.getElementById('excTbody');
+    tb.innerHTML = excItems.map(it =>
+      '<tr style="border-bottom:1px solid var(--line);">' +
+      '<td style="padding:9px 8px;">' + it.oc + '</td>' +
+      '<td style="padding:9px 8px;">' + (it.np || '—') + '</td>' +
+      '</tr>'
+    ).join('');
+    document.getElementById('excPanel').style.display = 'block';
+  }
+  document.getElementById('foot').textContent =
+    'El área registró ' + num + ' de ' + den + ' órdenes que le fueron enviadas en ' + mesTxt + ' ' + anio + '.' +
+    (exc > 0 ? ' Además, ' + exc + ' orden(es) fueron registradas sin tener registro previo del área anterior.' : '');
+
+  // color según nivel de cumplimiento
+  let barColor = '#ef4444';
+  if (pct >= 90) barColor = '#22c55e';
+  else if (pct >= 60) barColor = '#f59e0b';
+
+  // colorear también el % grande
+  document.getElementById('cPct').style.color = barColor;
+
+  // ── Alternar entre modo gráfica y reporte ──
+  if (modo === 'reporte') {
+    document.getElementById('chartPanel').style.display = 'none';
+    document.getElementById('reportPanel').style.display = 'block';
+    document.getElementById('rArea').textContent = area;
+    document.getElementById('rPeriodo').textContent = mesTxt + ' ' + anio;
+    document.getElementById('rNum').textContent = num;
+    document.getElementById('rDen').textContent = den;
+    document.getElementById('rRatio').textContent = num + ' / ' + den;
+    document.getElementById('rExc').textContent = exc;
+    document.getElementById('rPct').textContent = pct + '%';
+    document.getElementById('rPct').style.color = barColor;
+  } else {
+    document.getElementById('chartPanel').style.display = 'block';
+    document.getElementById('reportPanel').style.display = 'none';
+
+    const ctx = document.getElementById('barChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: [area],
+        datasets: [{
+          label: '% Cumplimiento',
+          data: [pct],
+          backgroundColor: barColor,
+          borderRadius: 8,
+          barThickness: 60,
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: {
+            min: 0, max: 100,
+            ticks: { color: '#8ea0b8', callback: v => v + '%' },
+            grid: { color: '#263042' }
+          },
+          y: {
+            ticks: { color: '#e6edf6', font: { size: 14, weight: 'bold' } },
+            grid: { display: false }
+          }
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: c => c.parsed.x + '% (' + num + '/' + den + ')'
+            }
+          }
+        }
+      }
+    });
+  }
+
+  if (den === 0) {
+    document.getElementById('foot').textContent =
+      'No se registraron órdenes enviadas a ' + area + ' en ' + mesTxt + ' ' + anio + '.';
+  }
+</script>
+</body>
+</html>

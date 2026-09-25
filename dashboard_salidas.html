@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Salidas de inventario SH · MERSA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,500;9..40,700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0c0f14;
+    --surface: #141820;
+    --surface2: #1a2030;
+    --surface3: #222a3a;
+    --border: #2a3348;
+    --accent: #3b82f6;
+    --accent-glow: rgba(59, 130, 246, 0.15);
+    --green: #22c55e;
+    --amber: #f59e0b;
+    --amber-dim: rgba(245, 158, 11, 0.12);
+    --text: #e2e8f0;
+    --text-dim: #64748b;
+    --text-muted: #475569;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  *, *::before, *::after { box-sizing: inherit; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "DM Sans", "Segoe UI", Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.45;
+    min-height: 100vh;
+  }
+
+  header {
+    background: linear-gradient(135deg, var(--surface) 0%, var(--surface2) 100%);
+    border-bottom: 1px solid var(--border);
+  }
+  .head-inner {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 20px 32px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .logo { height: 44px; width: auto; display: block; }
+  .title-block { flex: 1 1 280px; }
+  h1 {
+    font-family: "JetBrains Mono", Consolas, monospace;
+    font-weight: 700;
+    font-size: 20px;
+    line-height: 1.2;
+    margin: 0;
+  }
+  .period { margin: 4px 0 0; color: var(--text-dim); font-size: 14px; }
+
+  .toggle {
+    display: inline-flex;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 3px;
+    gap: 3px;
+  }
+  .toggle button {
+    font: 500 14px "DM Sans", sans-serif;
+    background: transparent;
+    color: var(--text-dim);
+    border: 0;
+    border-radius: 6px;
+    padding: 8px 14px;
+    cursor: pointer;
+  }
+  .toggle button[aria-pressed="true"] { background: var(--accent); color: #fff; }
+  .toggle button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .totals {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 24px 32px 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+  }
+  .totals > div {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 18px;
+    color: var(--text-dim);
+    font-size: 14px;
+  }
+  .totals strong {
+    display: block;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.1;
+    margin-bottom: 4px;
+  }
+
+  main {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 20px 32px 40px;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
+  }
+  @media (max-width: 1024px) { main { grid-template-columns: 1fr; } }
+  @media (max-width: 600px) {
+    .head-inner, .totals, main { padding-left: 16px; padding-right: 16px; }
+  }
+
+  section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 22px 22px;
+    min-width: 0;
+  }
+  h2 {
+    font-weight: 700;
+    font-size: 17px;
+    margin: 0 0 14px;
+    color: var(--text);
+  }
+
+  .leader {
+    background: var(--accent-glow);
+    border: 1px solid rgba(59, 130, 246, 0.35);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 16px;
+  }
+  .leader-name {
+    font-weight: 700;
+    font-size: 20px;
+    line-height: 1.2;
+    color: var(--text);
+    overflow-wrap: anywhere;
+  }
+  .leader-val {
+    font-family: "JetBrains Mono", monospace;
+    color: var(--accent);
+    font-weight: 600;
+    font-size: 14px;
+    margin-top: 4px;
+  }
+
+  ol { list-style: none; margin: 0; padding: 0; }
+  li {
+    display: grid;
+    grid-template-columns: 24px minmax(0, 1fr) auto;
+    column-gap: 10px;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--surface3);
+  }
+  li:last-child { border-bottom: 0; }
+  .pos {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 13px;
+    color: var(--text-muted);
+    text-align: right;
+  }
+  .name { font-weight: 500; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .val { font-family: "JetBrains Mono", monospace; font-weight: 600; font-size: 14px; color: var(--text); }
+  .track {
+    grid-column: 2 / 4;
+    height: 6px;
+    background: var(--surface3);
+    border-radius: 3px;
+    margin-top: 6px;
+    overflow: hidden;
+  }
+  .fill { height: 100%; background: #3a5a9a; border-radius: 3px; transition: width .5s ease; }
+  li:first-child .fill { background: var(--accent); }
+  @media (prefers-reduced-motion: reduce) { .fill { transition: none; } }
+
+  .empty { color: var(--text-dim); margin: 8px 0 0; }
+
+  .notice {
+    max-width: 640px;
+    margin: 48px auto;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px 28px;
+  }
+  .notice h2 { margin-bottom: 8px; }
+  .notice p { color: var(--text-dim); }
+  .notice b { color: var(--text); }
+  .notice a { color: var(--accent); font-weight: 600; }
+
+  footer { text-align: center; color: var(--text-muted); font-size: 13px; padding: 0 24px 28px; }
+
+  @media print {
+    body { background: #fff; color: #111; }
+    .toggle { display: none; }
+    section, .totals > div { break-inside: avoid; background: #fff; border-color: #ccc; }
+    main { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="head-inner">
+    <img class="logo" src="logo.png" alt="MERSA" onerror="this.style.display='none'">
+    <div class="title-block">
+      <h1>Salidas de inventario SH</h1>
+      <p class="period" id="period">Todo el historial</p>
+    </div>
+    <div class="toggle" role="group" aria-label="Medir por">
+      <button type="button" data-metric="piezas" aria-pressed="true">Piezas entregadas</button>
+      <button type="button" data-metric="solicitudes" aria-pressed="false">Número de solicitudes</button>
+    </div>
+  </div>
+</header>
+
+<div id="app"></div>
+
+<footer>Maquinados Especiales Rubio · Generado <span id="generated"></span></footer>
+
+<script>
+(function () {
+  const params = new URLSearchParams(window.location.search);
+  const app = document.getElementById('app');
+  let metric = 'piezas';
+
+  document.getElementById('generated').textContent =
+    new Date().toLocaleString('es-MX', { dateStyle: 'medium', timeStyle: 'short' });
+
+  // Formato por registro: nombre;;piezas;;solicitudes  | registros separados por ~~
+  function parse(raw) {
+    if (!raw) return [];
+    return raw.split('~~').map(function (row) {
+      const parts = row.split(';;');
+      return {
+        nombre: (parts[0] || '').trim() || 'Sin dato',
+        piezas: parseFloat(parts[1]) || 0,
+        solicitudes: parseInt(parts[2], 10) || 0
+      };
+    }).filter(function (r) { return r.piezas > 0 || r.solicitudes > 0; });
+  }
+
+  let data;
+  if (params.get('demo') === '1') {
+    data = {
+      productos: parse('Guantes de nitrilo;;340;;52~~Lentes de seguridad;;128;;60~~Tapones auditivos;;500;;41~~Cubrebocas KN95;;260;;33~~Guantes anticorte;;96;;38~~Careta para esmerilar;;22;;19~~Botas de seguridad;;18;;18~~Mangas anticorte;;40;;12~~Chaleco reflejante;;15;;11~~Mandil de carnaza;;9;;8~~Casco;;7;;7'),
+      personas: parse('Juan Pérez;;120;;22~~María López;;98;;18~~Carlos Ruiz;;85;;25~~Ana Torres;;70;;12~~Luis Gómez;;64;;15~~Pedro Sánchez;;40;;9~~Rosa Díaz;;38;;11~~Jorge Ramírez;;30;;7~~Elena Cruz;;22;;6~~Miguel Flores;;15;;4'),
+      motivos: parse('Desgaste;;620;;110~~Ingreso de personal;;210;;35~~Extravío;;140;;40~~Daño en operación;;160;;28~~Cambio de área;;50;;9')
+    };
+  } else {
+    data = {
+      productos: parse(params.get('p')),
+      personas: parse(params.get('s')),
+      motivos: parse(params.get('m'))
+    };
+  }
+
+  const desde = params.get('desde');
+  const hasta = params.get('hasta');
+  if (desde || hasta) {
+    document.getElementById('period').textContent =
+      desde && hasta ? 'Del ' + desde + ' al ' + hasta :
+      desde ? 'Desde el ' + desde : 'Hasta el ' + hasta;
+  }
+
+  const hasData = data.productos.length || data.personas.length || data.motivos.length;
+
+  if (!hasData) {
+    app.innerHTML =
+      '<div class="notice"><h2>No hay salidas para mostrar</h2>' +
+      '<p>Abre este dashboard desde Zoho Creator con el formulario <b>Consultar Dashboard</b>. ' +
+      'Si ya lo hiciste, el periodo elegido no tiene salidas registradas: prueba con otras fechas o déjalas en blanco.</p>' +
+      '<p><a href="?demo=1">Ver con datos de ejemplo</a></p></div>';
+    return;
+  }
+
+  app.innerHTML =
+    '<div class="totals" id="totals"></div>' +
+    '<main>' +
+      panel('productos', 'Productos con más salidas') +
+      panel('personas', 'Personas que más solicitan') +
+      panel('motivos', 'Motivos de solicitud') +
+    '</main>';
+
+  function panel(id, title) {
+    return '<section aria-labelledby="h-' + id + '"><h2 id="h-' + id + '">' + title + '</h2>' +
+           '<div id="' + id + '"></div></section>';
+  }
+
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function fmt(n) { return Number(n).toLocaleString('es-MX'); }
+
+  function unit(n) {
+    if (metric === 'piezas') return n === 1 ? 'pieza' : 'piezas';
+    return n === 1 ? 'solicitud' : 'solicitudes';
+  }
+
+  function render(id) {
+    const el = document.getElementById(id);
+    const top = data[id].slice().sort(function (a, b) {
+      return b[metric] - a[metric] || a.nombre.localeCompare(b.nombre, 'es');
+    }).slice(0, 10);
+
+    if (!top.length) { el.innerHTML = '<p class="empty">Sin registros en este periodo.</p>'; return; }
+
+    const max = top[0][metric] || 1;
+    const lead = top[0];
+    let html =
+      '<div class="leader"><div class="leader-name">' + esc(lead.nombre) + '</div>' +
+      '<div class="leader-val">' + fmt(lead[metric]) + ' ' + unit(lead[metric]) + '</div></div><ol>';
+
+    top.forEach(function (r, i) {
+      const pct = Math.max(2, (r[metric] / max) * 100);
+      html += '<li><span class="pos">' + (i + 1) + '</span>' +
+              '<span class="name" title="' + esc(r.nombre) + '">' + esc(r.nombre) + '</span>' +
+              '<span class="val">' + fmt(r[metric]) + '</span>' +
+              '<div class="track" aria-hidden="true"><div class="fill" style="width:0"></div></div></li>';
+    });
+    html += '</ol>';
+    el.innerHTML = html;
+
+    requestAnimationFrame(function () {
+      el.querySelectorAll('.fill').forEach(function (f, i) {
+        f.style.width = Math.max(2, (top[i][metric] / max) * 100) + '%';
+      });
+    });
+  }
+
+  function renderTotals() {
+    const piezas = data.productos.reduce(function (s, r) { return s + r.piezas; }, 0);
+    const sols = data.productos.reduce(function (s, r) { return s + r.solicitudes; }, 0);
+    document.getElementById('totals').innerHTML =
+      '<div><strong>' + fmt(piezas) + '</strong>piezas entregadas</div>' +
+      '<div><strong>' + fmt(sols) + '</strong>solicitudes</div>' +
+      '<div><strong>' + fmt(data.productos.length) + '</strong>productos distintos</div>' +
+      '<div><strong>' + fmt(data.personas.length) + '</strong>personas</div>';
+  }
+
+  function renderAll() { ['productos', 'personas', 'motivos'].forEach(render); }
+
+  document.querySelectorAll('.toggle button').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      metric = btn.dataset.metric;
+      document.querySelectorAll('.toggle button').forEach(function (b) {
+        b.setAttribute('aria-pressed', b === btn ? 'true' : 'false');
+      });
+      renderAll();
+    });
+  });
+
+  renderTotals();
+  renderAll();
+})();
+</script>
+</body>
+</html>

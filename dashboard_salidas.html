@@ -112,10 +112,10 @@
     margin: 0 auto;
     padding: 20px 32px 40px;
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 20px;
   }
-  @media (max-width: 1024px) { main { grid-template-columns: 1fr; } }
+  @media (max-width: 860px) { main { grid-template-columns: 1fr; } }
   @media (max-width: 600px) {
     .head-inner, .totals, main { padding-left: 16px; padding-right: 16px; }
   }
@@ -258,13 +258,15 @@
     data = {
       productos: parse('Guantes de nitrilo;;340;;52~~Lentes de seguridad;;128;;60~~Tapones auditivos;;500;;41~~Cubrebocas KN95;;260;;33~~Guantes anticorte;;96;;38~~Careta para esmerilar;;22;;19~~Botas de seguridad;;18;;18~~Mangas anticorte;;40;;12~~Chaleco reflejante;;15;;11~~Mandil de carnaza;;9;;8~~Casco;;7;;7'),
       personas: parse('Juan Pérez;;120;;22~~María López;;98;;18~~Carlos Ruiz;;85;;25~~Ana Torres;;70;;12~~Luis Gómez;;64;;15~~Pedro Sánchez;;40;;9~~Rosa Díaz;;38;;11~~Jorge Ramírez;;30;;7~~Elena Cruz;;22;;6~~Miguel Flores;;15;;4'),
-      motivos: parse('Desgaste;;620;;110~~Ingreso de personal;;210;;35~~Extravío;;140;;40~~Daño en operación;;160;;28~~Cambio de área;;50;;9')
+      motivos: parse('Desgaste;;620;;110~~Ingreso de personal;;210;;35~~Reposición por Extravío;;140;;40~~Daño en operación;;160;;28~~Cambio de área;;50;;9'),
+      extravio: parse('Carlos Ruiz;;22;;9~~Luis Gómez;;18;;7~~Juan Pérez;;15;;5~~Rosa Díaz;;14;;6~~Pedro Sánchez;;12;;4~~Ana Torres;;9;;3~~Jorge Ramírez;;8;;3~~Elena Cruz;;6;;2~~Miguel Flores;;4;;1')
     };
   } else {
     data = {
       productos: parse(params.get('p')),
       personas: parse(params.get('s')),
-      motivos: parse(params.get('m'))
+      motivos: parse(params.get('m')),
+      extravio: parse(params.get('x'))
     };
   }
 
@@ -276,7 +278,7 @@
       desde ? 'Desde el ' + desde : 'Hasta el ' + hasta;
   }
 
-  const hasData = data.productos.length || data.personas.length || data.motivos.length;
+  const hasData = data.productos.length || data.personas.length || data.motivos.length || data.extravio.length;
 
   if (!hasData) {
     app.innerHTML =
@@ -293,6 +295,7 @@
       panel('productos', 'Productos con más salidas') +
       panel('personas', 'Personas que más solicitan') +
       panel('motivos', 'Motivos de solicitud') +
+      panel('extravio', 'Personas con más reposiciones por extravío') +
     '</main>';
 
   function panel(id, title) {
@@ -354,7 +357,7 @@
       '<div><strong>' + fmt(data.personas.length) + '</strong>personas</div>';
   }
 
-  function renderAll() { ['productos', 'personas', 'motivos'].forEach(render); }
+  function renderAll() { ['productos', 'personas', 'motivos', 'extravio'].forEach(render); }
 
   document.querySelectorAll('.toggle button').forEach(function (btn) {
     btn.addEventListener('click', function () {

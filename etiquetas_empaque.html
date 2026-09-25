@@ -322,24 +322,28 @@ renderResumen();
 // Render de cada juego (una tarjeta por paquete)
 function preview(cant){
   const lc = datos.cliente ? datos.cliente.toUpperCase() : '';
+  const rubio = h => `<img src="logo.png" style="height:${h}px;" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'RUBIO'}))">`;
   return `<div class="emp-stack">
-    <div class="emp-lbl emp1">
-      <div class="l1">${datos.np}</div>
-      <div class="l2">O.C. ${datos.oc}</div>
-      <div class="l3">${cant} PZS  ${datos.linea}</div>
+    <div class="emp-lbl emp1" style="align-items:center;justify-content:center;position:relative;">
+      <div style="text-align:center;">
+        <div class="l1" style="font-size:26px;">${datos.np}</div>
+        <div class="l2" style="font-size:20px;">${cant} PIEZAS</div>
+      </div>
+      <div style="position:absolute;right:6px;bottom:5px;">${rubio(22)}</div>
     </div>
     <div class="emp-lbl emp2">
-      <div class="top"><img src="logo.png" style="height:14px;" onerror="this.replaceWith(Object.assign(document.createElement('b'),{textContent:'RUBIO'}))"><span>MAQUINADOS ESPECIALES RUBIO S.A. DE C.V.</span></div>
+      <div class="top">${rubio(16)}<b style="font-size:13px;">|</b><span style="font-size:8px;">MAQUINADOS ESPECIALES RUBIO S.A. DE C.V.</span></div>
       <div class="fch">FECHA: ${datos.fecha}</div>
       <div class="rowb"><div class="k">NUMERO DE PARTE</div><div class="barcode"></div></div>
       <div class="rowb"><div class="k">CANTIDAD</div><div class="barcode" style="flex:0 0 90px;"></div></div>
       <div class="rowb"><div class="k">ORDEN DE COMPRA</div><div class="barcode"></div></div>
-      <div class="cliente">${datos.cliente?`<img src="${clienteArchivo(datos.cliente)}" style="height:22px;" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'${lc}'}))">`:''}</div>
+      <div style="text-align:center;margin-top:2px;">${datos.cliente?`<img src="${clienteArchivo(datos.cliente)}" style="height:20px;" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'${lc}'}))">`:''}</div>
     </div>
-    <div class="emp-lbl emp3">
-      <div class="np">${datos.np}</div>
-      <div class="pz">${cant} PIEZAS</div>
-      <div class="rb"><img src="logo.png" style="height:16px;" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'RUBIO'}))"></div>
+    <div class="emp-lbl emp3" style="position:relative;">
+      <div class="np" style="font-size:26px;">${datos.np}</div>
+      <div class="pz" style="font-size:18px;">${cant} PIEZAS</div>
+      <div style="font-size:14px;font-weight:800;">${datos.oc} ${datos.linea}</div>
+      <div style="position:absolute;right:6px;bottom:5px;">${rubio(20)}</div>
     </div>
   </div>`;
 }
@@ -465,59 +469,90 @@ function deviceParaTamano(tam){
 }
 
 // ═══ ZPL (2x4in @203dpi = 812 x 406) ═══
-function zplEtiqueta1(c){return `^XA
+// Helper: posición X,Y para logo en esquina inferior derecha (o donde se indique)
+function logoInfDer(gf, margenX, margenY){
+  if(!gf) return null;
+  const w = gf.wBytes*8;
+  const x = 812 - w - (margenX||10);
+  const y = 406 - gf.h - (margenY||10);
+  return {x:x, y:y, w:w, h:gf.h};
+}
+function logoCentradoAbajo(gf, margenY){
+  if(!gf) return null;
+  const w = gf.wBytes*8;
+  const x = Math.round((812 - w)/2);
+  const y = 406 - gf.h - (margenY||10);
+  return {x:x, y:y, w:w, h:gf.h};
+}
+
+function zplEtiqueta1(c){
+  const gfRubio = gfCache['logo.png'];
+  const pos = logoInfDer(gfRubio, 15, 15);
+  const rubioZpl = pos ? `^FO${pos.x},${pos.y}${gfRubio.gf}` : `^CF0,50,50\n^FO560,320^FDRUBIO^FS`;
+  return `^XA
 ^CI28
 ^PW812
 ^LL406
-^CF0,70,70
-^FO40,40^FD${datos.np}^FS
-^CF0,60,60
-^FO40,140^FDO.C. ${datos.oc}^FS
-^CF0,60,60
-^FO40,240^FD${c} PZS  ${datos.linea}^FS
+^CF0,100,100
+^FO0,60^FB812,1,0,C,0^FD${datos.np}^FS
+^CF0,80,80
+^FO0,200^FB812,1,0,C,0^FD${c} PIEZAS^FS
+${rubioZpl}
 ^XZ`;}
+
 function zplEtiqueta2(c){
   const lc=datos.cliente?datos.cliente.toUpperCase():'';
-  // Logo RUBIO (^GF) arriba-izquierda; si no cargó, texto "RUBIO"
+  // Logo RUBIO (más grande) en esquina superior izquierda
   const gfRubio = gfCache['logo.png'];
-  // gfRubio.gf ya es "^GFA,..." completo; lo anteponemos con su posición
-  let rubioZpl = gfRubio ? `^FO40,15${gfRubio.gf}` : `^CF0,34,34\n^FO40,20^FDRUBIO^FS`;
-  // Logo cliente (^GF) a la derecha; si no cargó, texto
+  const rubioZpl = gfRubio ? `^FO25,20${gfRubio.gf}` : `^CF0,40,40\n^FO25,25^FDRUBIO^FS`;
+  // separador "|" y razón social (más grande y separada), después del logo
+  const rubioW = gfRubio ? (gfRubio.wBytes*8) : 120;
+  const xSep = 25 + rubioW + 20;
+  const xRazon = xSep + 25;
+  // Logo VERTIV centrado abajo
   const gfCli = datos.cliente ? gfCache[clienteArchivo(datos.cliente)] : null;
-  let cliZpl = gfCli ? `^FO600,150${gfCli.gf}` : `^CF0,30,30\n^FO640,160^FD${lc}^FS`;
+  const posCli = logoCentradoAbajo(gfCli, 12);
+  const cliZpl = posCli ? `^FO${posCli.x},${posCli.y}${gfCli.gf}` : `^CF0,30,30\n^FO600,300^FD${lc}^FS`;
   return `^XA
 ^CI28
 ^PW812
 ^LL406
 ${rubioZpl}
-^CF0,22,22
-^FO150,28^FDMAQUINADOS ESPECIALES RUBIO S.A. DE C.V.^FS
-^FO40,64^FDFECHA: ${datos.fecha}^FS
-^CF0,24,24
-^FO40,110^FDNUMERO DE PARTE^FS
-^BY2,2,45
-^FO330,100^BCN,45,Y,N,N^FD${datos.np}^FS
-^CF0,24,24
-^FO40,185^FDCANTIDAD^FS
-^BY2,2,45
-^FO330,175^BCN,45,Y,N,N^FD${c}^FS
-^CF0,24,24
-^FO40,265^FDORDEN DE COMPRA^FS
-^BY2,2,45
-^FO330,255^BCN,45,Y,N,N^FD${datos.ocLinea}^FS
+^CF0,50,50
+^FO${xSep},25^FD|^FS
+^CF0,26,26
+^FO${xRazon},20^FB520,2,0,L,0^FDMAQUINADOS ESPECIALES RUBIO S.A. DE C.V.^FS
+^CF0,26,26
+^FO40,95^FDFECHA: ${datos.fecha}^FS
+^CF0,28,28
+^FO40,140^FDNUMERO DE PARTE^FS
+^BY2,2,50
+^FO360,130^BCN,50,Y,N,N^FD${datos.np}^FS
+^CF0,28,28
+^FO40,210^FDCANTIDAD^FS
+^BY2,2,50
+^FO360,200^BCN,50,Y,N,N^FD${c}^FS
+^CF0,28,28
+^FO40,280^FDORDEN DE COMPRA^FS
+^BY2,2,50
+^FO360,270^BCN,50,Y,N,N^FD${datos.ocLinea}^FS
 ${cliZpl}
 ^XZ`;}
+
 function zplEtiqueta3(c){
   const gfRubio = gfCache['logo.png'];
-  let rubioZpl = gfRubio ? `^FO560,180${gfRubio.gf}` : `^CF0,50,50\n^FO600,210^FDRUBIO^FS`;
+  const pos = logoInfDer(gfRubio, 15, 15);
+  const rubioZpl = pos ? `^FO${pos.x},${pos.y}${gfRubio.gf}` : `^CF0,50,50\n^FO560,320^FDRUBIO^FS`;
   return `^XA
 ^CI28
 ^PW812
 ^LL406
-^CF0,80,80
-^FO40,60^FD${datos.np}^FS
+^CF0,90,90
+^FO40,40^FD${datos.np}^FS
 ^CF0,70,70
-^FO40,200^FD${c} PIEZAS^FS
+^FO40,160^FD${c} PIEZAS^FS
+^CF0,55,55
+^FO40,260^FD${datos.oc} ${datos.linea}^FS
 ${rubioZpl}
 ^XZ`;}
 
@@ -640,8 +675,8 @@ async function imprimirTodo(){
 }
 
 async function precargarLogos(){
-  await precargarLogo('logo.png', 120);
-  if(datos.cliente) await precargarLogo(clienteArchivo(datos.cliente), 160);
+  await precargarLogo('logo.png', 180);
+  if(datos.cliente) await precargarLogo(clienteArchivo(datos.cliente), 200);
 }
 conectar();
 precargarLogos();

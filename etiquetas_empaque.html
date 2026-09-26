@@ -237,11 +237,12 @@ function imagenAGF(url, maxW){
     img.src = url;
   });
 }
-async function precargarLogo(nombre, maxW){
+async function precargarLogo(nombre, maxW, cacheKey){
+  const key = cacheKey || nombre;
   if(!nombre) return null;
-  if(gfCache[nombre]) return gfCache[nombre];
+  if(gfCache[key]) return gfCache[key];
   const r = await imagenAGF(LOGO_BASE + nombre, maxW);
-  gfCache[nombre] = r;
+  gfCache[key] = r;
   return r;
 }
 
@@ -255,6 +256,14 @@ let paquetes=repartoPaquetes(datos.totalPzas,datos.numPaq);
 // Etiqueta individual 1.25x1: solo VERTIV + sede Reynosa. Una por cada pieza.
 const aplicaIndividual = (datos.cliente.toUpperCase()==="VERTIV" && datos.sede.toLowerCase()==="reynosa");
 const revFmt = datos.rev ? ("REV \u2013 " + datos.rev) : "";
+// Fecha con mes abreviado a 3 letras: "26/September/2026" -> "26/Sep/2026"
+function fechaMesCorto(f){
+  if(!f) return "";
+  const partes = f.split("/");
+  if(partes.length===3){ return partes[0] + "/" + partes[1].substring(0,3) + "/" + partes[2]; }
+  return f;
+}
+const fechaCorta = fechaMesCorto(datos.fecha);
 const tamNombre={'4x6':'4 × 6 in','2x4':'2 × 4 in','1.25x1':'1.25 × 1 in','125x1':'1.25 × 1 in'}[datos.tam]||'2 × 4 in';
 
 
@@ -397,7 +406,7 @@ function reAplicarPreviewIndividual(){
   const prev = document.getElementById('indPreviewCard');
   if(prev) prev.remove();
   if(!aplicaIndividual) return;
-  const rubioImg = `<img src="logo.png" style="height:11px;" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'RUBIO'}))">`;
+  const rubioImg = `<img src="logo.png" style="height:8px;" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'RUBIO'}))">`;
   const card = document.createElement('div');
   card.className = 'label-card';
   card.id = 'indPreviewCard';
@@ -411,7 +420,7 @@ function reAplicarPreviewIndividual(){
             <div style="font-size:6px;font-weight:600;">${datos.desc}</div>
             <div style="font-weight:800;font-size:9px;">1 PIEZA</div>
             <div style="font-size:6px;">${revFmt}</div>
-            <div style="font-size:5px;">${datos.fecha}</div>
+            <div style="font-size:5px;">${fechaCorta}</div>
             <div style="position:absolute;right:3px;bottom:3px;">${rubioImg}</div>
           </div>`).join('')}
       </div>
@@ -613,8 +622,8 @@ ${rubioZpl}
 
 // ── Etiqueta individual 1.25x1 (3 columnas por línea) ──
 function bloqueIndividual(xOff){
-  const gfRubio = gfCache['logo.png'];
-  let rubioZpl = gfRubio ? `^FO${xOff+150},150${gfRubio.gf}` : `^CF0,18,18\n^FO${xOff+150},155^FDRUBIO^FS`;
+  const gfRubio = gfCache['logo_small'] || gfCache['logo.png'];
+  let rubioZpl = gfRubio ? `^FO${xOff+165},155${gfRubio.gf}` : `^CF0,16,16\n^FO${xOff+165},160^FDRUBIO^FS`;
   const fNP = fuenteAdaptativa(datos.np, 230, 30, 14);
   return `^CF0,${fNP},${fNP}
 ^FO${xOff+15},15^FD${datos.np}^FS
@@ -625,7 +634,7 @@ function bloqueIndividual(xOff){
 ^CF0,18,18
 ^FO${xOff+15},120^FD${revFmt}^FS
 ^CF0,16,16
-^FO${xOff+15},150^FD${datos.fecha}^FS
+^FO${xOff+15},150^FD${fechaCorta}^FS
 ${rubioZpl}`;
 }
 // Genera todas las etiquetas individuales, agrupando de 3 en 3 en un ^XA...^XZ
@@ -747,6 +756,7 @@ async function imprimirTodo(){
 
 async function precargarLogos(){
   await precargarLogo('logo.png', 180);
+  await precargarLogo('logo.png', 70, 'logo_small');
   if(datos.cliente) await precargarLogo(clienteArchivo(datos.cliente), 200);
 }
 conectar();

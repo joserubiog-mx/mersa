@@ -623,7 +623,7 @@ ${rubioZpl}
 // ── Etiqueta individual 1.25x1 (3 columnas por línea) ──
 function bloqueIndividual(xOff){
   const gfRubio = gfCache['logo_small'] || gfCache['logo.png'];
-  let rubioZpl = gfRubio ? `^FO${xOff+160},150${gfRubio.gf}` : `^CF0,18,18\n^FO${xOff+160},155^FDRUBIO^FS`;
+  let rubioZpl = gfRubio ? `^FO${xOff+140},135${gfRubio.gf}` : `^CF0,18,18\n^FO${xOff+140},140^FDRUBIO^FS`;
   const fNP = fuenteAdaptativa(datos.np, 230, 30, 14);
   return `^CF0,${fNP},${fNP}
 ^FO${xOff+15},12^FD${datos.np}^FS

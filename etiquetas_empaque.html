@@ -382,7 +382,10 @@ function renderLabels(){
         <div class="field"><div class="k">Juegos a imprimir</div><div class="v">${g.count}</div></div>
         <div class="field"><div class="k">Línea</div><div class="v">${datos.linea}</div></div>
       </div>
-      <button class="btn-print-single" id="btnGrupo${gi}" onclick="imprimirGrupo(${gi})">🖨️ IMPRIMIR ${copiasTxt.toUpperCase()}</button>
+      <div style="display:flex;gap:8px;">
+        <button class="btn-print-single" style="flex:1;" id="btnGrupo1_${gi}" onclick="imprimirGrupo(${gi},true)">🖨️ IMPRIMIR 1 JUEGO</button>
+        <button class="btn-print-single" style="flex:1;" id="btnGrupo${gi}" onclick="imprimirGrupo(${gi},false)">🖨️ IMPRIMIR ${copiasTxt.toUpperCase()}</button>
+      </div>
     </div>`;
   }
   document.getElementById('labelsList').innerHTML=html;
@@ -414,7 +417,10 @@ function reAplicarPreviewIndividual(){
       </div>
     </div>
     <div class="tam-label">1.25 × 1 in · 3 por línea · una por cada pieza</div>
-    <button class="btn-print-single" id="btnIndividual" onclick="imprimirIndividuales()">🖨️ IMPRIMIR ETIQUETAS INDIVIDUALES</button>
+    <div style="display:flex;gap:8px;">
+      <button class="btn-print-single" style="flex:1;" id="btnIndividual1" onclick="imprimirIndividuales(true)">🖨️ IMPRIMIR 1 ETIQUETA</button>
+      <button class="btn-print-single" style="flex:1;" id="btnIndividual" onclick="imprimirIndividuales(false)">🖨️ IMPRIMIR TODAS (${datos.totalPzas})</button>
+    </div>
   `;
   document.getElementById('labelsList').appendChild(card);
 }
@@ -493,10 +499,10 @@ function zplEtiqueta1(c){
 ^CI28
 ^PW812
 ^LL406
+^CF0,130,130
+^FO0,50^FB812,1,0,C,0^FD${datos.np}^FS
 ^CF0,100,100
-^FO0,60^FB812,1,0,C,0^FD${datos.np}^FS
-^CF0,80,80
-^FO0,200^FB812,1,0,C,0^FD${c} PIEZAS^FS
+^FO0,210^FB812,1,0,C,0^FD${c} PIEZAS^FS
 ${rubioZpl}
 ^XZ`;}
 
@@ -509,33 +515,40 @@ function zplEtiqueta2(c){
   const rubioW = gfRubio ? (gfRubio.wBytes*8) : 120;
   const xSep = 25 + rubioW + 20;
   const xRazon = xSep + 25;
-  // Logo VERTIV centrado abajo
+  // Logo VERTIV a la derecha de las barras (columna derecha)
   const gfCli = datos.cliente ? gfCache[clienteArchivo(datos.cliente)] : null;
-  const posCli = logoCentradoAbajo(gfCli, 12);
-  const cliZpl = posCli ? `^FO${posCli.x},${posCli.y}${gfCli.gf}` : `^CF0,30,30\n^FO600,300^FD${lc}^FS`;
+  let cliZpl;
+  if(gfCli){
+    const wCli = gfCli.wBytes*8;
+    const xCli = 812 - wCli - 20;
+    const yCli = 200;  // a la altura media de las barras
+    cliZpl = `^FO${xCli},${yCli}${gfCli.gf}`;
+  } else {
+    cliZpl = `^CF0,30,30\n^FO660,220^FD${lc}^FS`;
+  }
   return `^XA
 ^CI28
 ^PW812
 ^LL406
 ${rubioZpl}
 ^CF0,50,50
-^FO${xSep},25^FD|^FS
+^FO${xSep},30^FD|^FS
 ^CF0,26,26
-^FO${xRazon},20^FB520,2,0,L,0^FDMAQUINADOS ESPECIALES RUBIO S.A. DE C.V.^FS
+^FO${xRazon},35^FB520,2,0,L,0^FDMAQUINADOS ESPECIALES RUBIO S.A. DE C.V.^FS
 ^CF0,26,26
-^FO40,95^FDFECHA: ${datos.fecha}^FS
+^FO40,105^FDFECHA: ${datos.fecha}^FS
 ^CF0,28,28
-^FO40,140^FDNUMERO DE PARTE^FS
+^FO40,155^FDNUMERO DE PARTE^FS
 ^BY2,2,50
-^FO360,130^BCN,50,Y,N,N^FD${datos.np}^FS
+^FO360,145^BCN,50,Y,N,N^FD${datos.np}^FS
 ^CF0,28,28
-^FO40,210^FDCANTIDAD^FS
+^FO40,235^FDCANTIDAD^FS
 ^BY2,2,50
-^FO360,200^BCN,50,Y,N,N^FD${c}^FS
+^FO360,225^BCN,50,Y,N,N^FD${c}^FS
 ^CF0,28,28
-^FO40,280^FDORDEN DE COMPRA^FS
+^FO40,315^FDORDEN DE COMPRA^FS
 ^BY2,2,50
-^FO360,270^BCN,50,Y,N,N^FD${datos.ocLinea}^FS
+^FO360,305^BCN,50,Y,N,N^FD${datos.ocLinea}^FS
 ${cliZpl}
 ^XZ`;}
 
@@ -547,12 +560,12 @@ function zplEtiqueta3(c){
 ^CI28
 ^PW812
 ^LL406
-^CF0,90,90
+^CF0,110,110
 ^FO40,40^FD${datos.np}^FS
-^CF0,70,70
-^FO40,160^FD${c} PIEZAS^FS
-^CF0,55,55
-^FO40,260^FD${datos.oc} ${datos.linea}^FS
+^CF0,90,90
+^FO40,180^FD${c} PIEZAS^FS
+^CF0,65,65
+^FO40,300^FD${datos.oc} ${datos.linea}^FS
 ${rubioZpl}
 ^XZ`;}
 
@@ -602,7 +615,7 @@ async function enviarZPL(device,zpl){
   if(!res.ok){throw new Error('Status '+res.status+': '+await res.text());}
 }
 
-async function imprimirGrupo(gi){
+async function imprimirGrupo(gi, soloUno){
   const rv = leerReacomodo();
   if(!rv.vacio && !rv.valido){ showMessage('El reacomodo no cuadra: ' + rv.msg, 'error'); return; }
   const device=deviceParaTamano(datos.tam);
@@ -612,32 +625,46 @@ async function imprimirGrupo(gi){
   const g = grupos[gi];
   if(!g) return;
   const copiesExtra = parseInt(document.getElementById('copies').value)||1;
-  const btn=document.getElementById('btnGrupo'+gi); const orig=btn.textContent; btn.textContent='ENVIANDO...'; btn.disabled=true;
+  const btnId = soloUno ? ('btnGrupo1_'+gi) : ('btnGrupo'+gi);
+  const btn=document.getElementById(btnId); const orig=btn.textContent; btn.textContent='ENVIANDO...'; btn.disabled=true;
   try{
-    // N copias del juego (una por cada paquete del grupo) × copias extra
+    // soloUno: 1 juego. Todos: N copias (una por paquete del grupo) × copias extra
+    const veces = soloUno ? 1 : (g.count*copiesExtra);
     let z='';
-    for(let n=0; n<g.count*copiesExtra; n++) z+=zplJuego(g.cant);
+    for(let n=0; n<veces; n++) z+=zplJuego(g.cant);
     await enviarZPL(device,z);
     btn.className='btn-print-single success'; btn.textContent='✓ ENVIADO';
-    debugLog('Grupo '+(gi+1)+' ('+g.count+' juegos × '+g.cant+' pzas) a '+(device.name||device.uid));
+    debugLog('Grupo '+(gi+1)+' ('+veces+' juego(s) × '+g.cant+' pzas) a '+(device.name||device.uid));
   }catch(e){btn.className='btn-print-single error'; btn.textContent='✗ ERROR'; debugLog('Error: '+e.message);}
   setTimeout(()=>{btn.className='btn-print-single';btn.textContent=orig;btn.disabled=false;},3000);
 }
 
-// Imprimir SOLO las etiquetas individuales 1.25x1 (botón propio)
-async function imprimirIndividuales(){
+// Imprimir etiquetas individuales 1.25x1 (soloUno = una etiqueta; false = todas)
+async function imprimirIndividuales(soloUno){
   if(!aplicaIndividual) return;
   const rv = leerReacomodo();
   if(!rv.vacio && !rv.valido){ showMessage('El reacomodo no cuadra: ' + rv.msg, 'error'); return; }
   const devInd=deviceParaTamano('1.25x1');
   if(!devInd){showMessage('Falta asignar impresora 1.25x1 para las etiquetas individuales.','error');return;}
   await precargarLogos();
-  const btn=document.getElementById('btnIndividual'); const orig=btn?btn.textContent:''; if(btn){btn.textContent='ENVIANDO...';btn.disabled=true;}
+  const btnId = soloUno ? 'btnIndividual1' : 'btnIndividual';
+  const btn=document.getElementById(btnId); const orig=btn?btn.textContent:''; if(btn){btn.textContent='ENVIANDO...';btn.disabled=true;}
   try{
-    const zplInd=zplIndividuales();
+    let zplInd;
+    if(soloUno){
+      // Una sola etiqueta (un bloque en un ^XA)
+      zplInd = `^XA
+^CI28
+^PW762
+^LL203
+` + bloqueIndividual(0) + `
+^XZ`;
+    } else {
+      zplInd = zplIndividuales();
+    }
     await enviarZPL(devInd, zplInd);
     if(btn){btn.className='btn-print-single success'; btn.textContent='✓ ENVIADO';}
-    debugLog('Individuales ('+datos.totalPzas+' pzas) a '+(devInd.name||devInd.uid));
+    debugLog('Individuales ('+(soloUno?'1':datos.totalPzas)+' pzas) a '+(devInd.name||devInd.uid));
   }catch(e){ if(btn){btn.className='btn-print-single error'; btn.textContent='✗ ERROR';} debugLog('Error: '+e.message); }
   setTimeout(()=>{ if(btn){btn.className='btn-print-single';btn.textContent=orig;btn.disabled=false;} },3000);
 }

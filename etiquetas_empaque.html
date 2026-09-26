@@ -548,7 +548,7 @@ function zplEtiqueta2(c){
   if(gfCli){
     const wCli = gfCli.wBytes*8;
     const xCli = 812 - wCli - 15;
-    const yCli = 60;  // arriba-derecha, junto a la razón social
+    const yCli = 205;  // a la altura de CANTIDAD (fila de en medio)
     cliZpl = `^FO${xCli},${yCli}${gfCli.gf}`;
   } else {
     cliZpl = `^CF0,30,30\n^FO660,220^FD${lc}^FS`;
@@ -572,18 +572,18 @@ ${rubioZpl}
 ^CF0,28,28
 ^FO40,150^FDNUMERO DE PARTE^FS
 ^CF0,30,30
-^BY${modNP},2,40
-^FO330,140^BCN,40,Y,N,N^FD${datos.np}^FS
+^BY${modNP},2,30
+^FO280,150^BCN,30,Y,N,N^FD${datos.np}^FS
 ^CF0,28,28
 ^FO40,235^FDCANTIDAD^FS
 ^CF0,30,30
-^BY${modCant},2,40
-^FO330,225^BCN,40,Y,N,N^FD${c}^FS
+^BY${modCant},2,30
+^FO280,232^BCN,30,Y,N,N^FD${c}^FS
 ^CF0,28,28
 ^FO40,320^FDORDEN DE COMPRA^FS
 ^CF0,30,30
-^BY${modOC},2,40
-^FO330,310^BCN,40,Y,N,N^FD${datos.ocLinea}^FS
+^BY${modOC},2,30
+^FO280,318^BCN,30,Y,N,N^FD${datos.ocLinea}^FS
 ${cliZpl}
 ^XZ`;}
 

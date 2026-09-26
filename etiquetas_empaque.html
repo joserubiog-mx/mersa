@@ -491,18 +491,45 @@ function logoCentradoAbajo(gf, margenY){
   return {x:x, y:y, w:w, h:gf.h};
 }
 
+// ── Helpers de tamaño adaptativo ──
+// Calcula alto de fuente para que 'texto' quepa en 'anchoDisp' (dots).
+// La fuente CF0 escalable es ~0.6 de ancho por alto. size ≈ anchoDisp / (len*0.6)
+function fuenteAdaptativa(texto, anchoDisp, maxSize, minSize){
+  const len = (texto||'').length || 1;
+  let size = Math.floor(anchoDisp / (len*0.60));
+  if(size > maxSize) size = maxSize;
+  if(size < minSize) size = minSize;
+  return size;
+}
+// Módulo (^BY) del Code128 según largo, para que no se corte.
+// Ancho aprox = (len*11 + 35) * modulo. Buscamos el mayor modulo que quepa en anchoDisp.
+function moduloBarras(dato, anchoDisp){
+  const len = (dato||'').length || 1;
+  const unidades = len*11 + 35;
+  let mod = Math.floor(anchoDisp / unidades);
+  if(mod < 1) mod = 1;
+  if(mod > 3) mod = 3;
+  return mod;
+}
+// Config común: velocidad y darkness para que no se jale la tinta
+const ZPL_CFG = "^PR3^MD10";  // PR3 = 3 ips (más lento), MD10 = darkness medio-alto
+
 function zplEtiqueta1(c){
   const gfRubio = gfCache['logo.png'];
   const pos = logoInfDer(gfRubio, 15, 15);
   const rubioZpl = pos ? `^FO${pos.x},${pos.y}${gfRubio.gf}` : `^CF0,50,50\n^FO560,320^FDRUBIO^FS`;
+  const fNP = fuenteAdaptativa(datos.np, 760, 130, 45);
+  const txtPz = c + " PIEZAS";
+  const fPz = fuenteAdaptativa(txtPz, 760, 100, 40);
   return `^XA
 ^CI28
+${ZPL_CFG}
 ^PW812
 ^LL406
-^CF0,130,130
-^FO0,50^FB812,1,0,C,0^FD${datos.np}^FS
-^CF0,100,100
-^FO0,210^FB812,1,0,C,0^FD${c} PIEZAS^FS
+^CF0,${fNP},${fNP}
+^FO0,60^FB812,1,0,C,0^FD${datos.np}^FS
+^CF0,${fPz},${fPz}
+^FO0,220^FB812,1,0,C,0^FD${txtPz}^FS
 ${rubioZpl}
 ^XZ`;}
 
@@ -526,8 +553,13 @@ function zplEtiqueta2(c){
   } else {
     cliZpl = `^CF0,30,30\n^FO660,220^FD${lc}^FS`;
   }
+  // Módulo adaptativo de barras (ancho disponible ~380 dots antes del VERTIV)
+  const modNP = moduloBarras(datos.np, 380);
+  const modCant = moduloBarras(c.toString(), 380);
+  const modOC = moduloBarras(datos.ocLinea, 380);
   return `^XA
 ^CI28
+${ZPL_CFG}
 ^PW812
 ^LL406
 ${rubioZpl}
@@ -539,15 +571,15 @@ ${rubioZpl}
 ^FO40,105^FDFECHA: ${datos.fecha}^FS
 ^CF0,28,28
 ^FO40,155^FDNUMERO DE PARTE^FS
-^BY2,2,50
+^BY${modNP},2,50
 ^FO360,145^BCN,50,Y,N,N^FD${datos.np}^FS
 ^CF0,28,28
 ^FO40,235^FDCANTIDAD^FS
-^BY2,2,50
+^BY${modCant},2,50
 ^FO360,225^BCN,50,Y,N,N^FD${c}^FS
 ^CF0,28,28
 ^FO40,315^FDORDEN DE COMPRA^FS
-^BY2,2,50
+^BY${modOC},2,50
 ^FO360,305^BCN,50,Y,N,N^FD${datos.ocLinea}^FS
 ${cliZpl}
 ^XZ`;}
@@ -556,16 +588,22 @@ function zplEtiqueta3(c){
   const gfRubio = gfCache['logo.png'];
   const pos = logoInfDer(gfRubio, 15, 15);
   const rubioZpl = pos ? `^FO${pos.x},${pos.y}${gfRubio.gf}` : `^CF0,50,50\n^FO560,320^FDRUBIO^FS`;
+  const fNP = fuenteAdaptativa(datos.np, 620, 110, 40);
+  const txtPz = c + " PIEZAS";
+  const fPz = fuenteAdaptativa(txtPz, 620, 90, 36);
+  const txtOC = datos.oc + " " + datos.linea;
+  const fOC = fuenteAdaptativa(txtOC, 620, 65, 28);
   return `^XA
 ^CI28
+${ZPL_CFG}
 ^PW812
 ^LL406
-^CF0,110,110
+^CF0,${fNP},${fNP}
 ^FO40,40^FD${datos.np}^FS
-^CF0,90,90
-^FO40,180^FD${c} PIEZAS^FS
-^CF0,65,65
-^FO40,300^FD${datos.oc} ${datos.linea}^FS
+^CF0,${fPz},${fPz}
+^FO40,180^FD${txtPz}^FS
+^CF0,${fOC},${fOC}
+^FO40,300^FD${txtOC}^FS
 ${rubioZpl}
 ^XZ`;}
 
@@ -574,7 +612,8 @@ ${rubioZpl}
 function bloqueIndividual(xOff){
   const gfRubio = gfCache['logo.png'];
   let rubioZpl = gfRubio ? `^FO${xOff+150},150${gfRubio.gf}` : `^CF0,18,18\n^FO${xOff+150},155^FDRUBIO^FS`;
-  return `^CF0,24,24
+  const fNP = fuenteAdaptativa(datos.np, 230, 30, 14);
+  return `^CF0,${fNP},${fNP}
 ^FO${xOff+15},15^FD${datos.np}^FS
 ^CF0,18,18
 ^FO${xOff+15},48^FB230,1,0,L,0^FD${datos.desc}^FS
@@ -596,6 +635,7 @@ function zplIndividuales(){
   while(i < total){
     let bloque = `^XA
 ^CI28
+${ZPL_CFG}
 ^PW762
 ^LL203
 `;
@@ -655,6 +695,7 @@ async function imprimirIndividuales(soloUno){
       // Una sola etiqueta (un bloque en un ^XA)
       zplInd = `^XA
 ^CI28
+${ZPL_CFG}
 ^PW762
 ^LL203
 ` + bloqueIndividual(0) + `

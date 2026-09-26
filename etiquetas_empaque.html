@@ -406,7 +406,7 @@ function reAplicarPreviewIndividual(){
   const prev = document.getElementById('indPreviewCard');
   if(prev) prev.remove();
   if(!aplicaIndividual) return;
-  const rubioImg = `<img src="logo.png" style="height:8px;" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'RUBIO'}))">`;
+  const rubioImg = `<img src="logo.png" style="height:10px;" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'RUBIO'}))">`;
   const card = document.createElement('div');
   card.className = 'label-card';
   card.id = 'indPreviewCard';
@@ -417,10 +417,10 @@ function reAplicarPreviewIndividual(){
         ${[0,1,2].map(()=>`
           <div style="width:80px;height:64px;background:#fff;color:#000;border-radius:3px;padding:4px 5px;font-family:Arial,sans-serif;display:flex;flex-direction:column;justify-content:center;gap:1px;position:relative;">
             <div style="font-weight:800;font-size:9px;">${datos.np}</div>
-            <div style="font-size:6px;font-weight:600;">${datos.desc}</div>
-            <div style="font-weight:800;font-size:9px;">1 PIEZA</div>
             <div style="font-size:6px;">${revFmt}</div>
-            <div style="font-size:5px;">${fechaCorta}</div>
+            <div style="font-size:6px;font-weight:600;">${datos.desc}</div>
+            <div style="font-size:6px;">1 PIEZA</div>
+            <div style="font-size:6px;">${fechaCorta}</div>
             <div style="position:absolute;right:3px;bottom:3px;">${rubioImg}</div>
           </div>`).join('')}
       </div>
@@ -623,18 +623,18 @@ ${rubioZpl}
 // ── Etiqueta individual 1.25x1 (3 columnas por línea) ──
 function bloqueIndividual(xOff){
   const gfRubio = gfCache['logo_small'] || gfCache['logo.png'];
-  let rubioZpl = gfRubio ? `^FO${xOff+165},155${gfRubio.gf}` : `^CF0,16,16\n^FO${xOff+165},160^FDRUBIO^FS`;
+  let rubioZpl = gfRubio ? `^FO${xOff+160},150${gfRubio.gf}` : `^CF0,18,18\n^FO${xOff+160},155^FDRUBIO^FS`;
   const fNP = fuenteAdaptativa(datos.np, 230, 30, 14);
   return `^CF0,${fNP},${fNP}
-^FO${xOff+15},15^FD${datos.np}^FS
-^CF0,18,18
-^FO${xOff+15},48^FB230,1,0,L,0^FD${datos.desc}^FS
-^CF0,26,26
-^FO${xOff+15},80^FD1 PIEZA^FS
-^CF0,18,18
-^FO${xOff+15},120^FD${revFmt}^FS
-^CF0,16,16
-^FO${xOff+15},150^FD${fechaCorta}^FS
+^FO${xOff+15},12^FD${datos.np}^FS
+^CF0,20,20
+^FO${xOff+15},50^FD${revFmt}^FS
+^CF0,20,20
+^FO${xOff+15},80^FB230,1,0,L,0^FD${datos.desc}^FS
+^CF0,20,20
+^FO${xOff+15},112^FD1 PIEZA^FS
+^CF0,20,20
+^FO${xOff+15},144^FD${fechaCorta}^FS
 ${rubioZpl}`;
 }
 // Genera todas las etiquetas individuales, agrupando de 3 en 3 en un ^XA...^XZ
@@ -756,7 +756,7 @@ async function imprimirTodo(){
 
 async function precargarLogos(){
   await precargarLogo('logo.png', 180);
-  await precargarLogo('logo.png', 70, 'logo_small');
+  await precargarLogo('logo.png', 90, 'logo_small');
   if(datos.cliente) await precargarLogo(clienteArchivo(datos.cliente), 200);
 }
 conectar();

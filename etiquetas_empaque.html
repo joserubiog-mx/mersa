@@ -548,15 +548,15 @@ function zplEtiqueta2(c){
   if(gfCli){
     const wCli = gfCli.wBytes*8;
     const xCli = 812 - wCli - 15;
-    const yCli = 406 - gfCli.h - 12;  // abajo-derecha
+    const yCli = 60;  // arriba-derecha, junto a la razón social
     cliZpl = `^FO${xCli},${yCli}${gfCli.gf}`;
   } else {
     cliZpl = `^CF0,30,30\n^FO660,220^FD${lc}^FS`;
   }
   // Módulo adaptativo de barras (ancho disponible ~380 dots antes del VERTIV)
-  const modNP = moduloBarras(datos.np, 450);
-  const modCant = moduloBarras(c.toString(), 450);
-  const modOC = moduloBarras(datos.ocLinea, 450);
+  const modNP = moduloBarras(datos.np, 420);
+  const modCant = moduloBarras(c.toString(), 420);
+  const modOC = moduloBarras(datos.ocLinea, 420);
   return `^XA
 ^CI28
 ${ZPL_CFG}

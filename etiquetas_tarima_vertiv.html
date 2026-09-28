@@ -66,6 +66,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
   <div class="section-title">▸ ETIQUETA A IMPRIMIR</div>
   <div id="labelsList"></div>
   <button class="print-btn disabled" id="printBtn" onclick="imprimir()" disabled>BUSCANDO IMPRESORA...</button>
+  <button class="print-btn" id="pdfBtn" style="margin-top:10px;background:var(--surface2);border:1px solid var(--border);color:var(--text);" onclick="abrirPDF()">📄 ABRIR HOJA PDF DE LA TARIMA</button>
   <div id="messageArea"></div>
   <div id="debug"></div>
 </div>
@@ -77,6 +78,7 @@ const datos={
   folio:P.get('folio')||'',          // folio de tarima
   ocs:P.get('ocs')||'',              // OCs (sin línea) separadas por coma
   nps:P.get('nps')||'',              // NPs separados por coma
+  pdf:P.get('pdf')||'',              // URL de la hoja PDF (hoja_tarima)
 };
 const BP_BASE="https://localhost:9101";
 let allDevices=[];
@@ -207,6 +209,11 @@ async function imprimir(){
     showMessage('Etiqueta enviada.','ok');
   }catch(e){btn.className='print-btn';btn.disabled=false;btn.textContent='⬡ IMPRIMIR ETIQUETA';showMessage('Error: '+e.message,'error');debugLog('Error: '+e.message);}
 }
+function abrirPDF(){
+  if(datos.pdf){ window.open(datos.pdf, "_blank"); }
+}
+// Ocultar el botón PDF si no vino la URL
+if(!datos.pdf){ const b=document.getElementById('pdfBtn'); if(b) b.style.display='none'; }
 conectar();
 </script>
 </body>

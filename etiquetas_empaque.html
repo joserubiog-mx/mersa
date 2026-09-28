@@ -255,6 +255,26 @@ function repartoPaquetes(total,num){const p=[];if(num<=0)return p;const base=Mat
 let paquetes=repartoPaquetes(datos.totalPzas,datos.numPaq);
 // Etiqueta individual 1.25x1: solo VERTIV + sede Reynosa. Una por cada pieza.
 const aplicaIndividual = (datos.cliente.toUpperCase()==="VERTIV" && datos.sede.toLowerCase()==="reynosa");
+const esEmerson = (datos.cliente.toUpperCase()==="EMERSON APPLETON");
+const esOrto = (datos.cliente.toUpperCase()==="ORTO");
+const esAbb = (datos.cliente.toUpperCase()==="ABB");
+const etiquetasPorJuego = (esEmerson || esOrto) ? 1 : 3;
+// Para ABB: separar OC y línea desde ocLinea tipo "102930L160"
+function abbOcLinea(){
+  const raw = datos.ocLinea || "";
+  const pos = raw.indexOf("L");
+  let oc = raw, lin = "";
+  if(pos > 0){ oc = raw.substring(0,pos); lin = raw.substring(pos+1); }
+  // línea a 5 dígitos con ceros a la izquierda
+  const linPad = ("00000" + lin.replace(/\D/g,'')).slice(-5);
+  return {oc:oc, lin:linPad};
+}
+// Arma el dato del código: (P)OC(L)Linea(Q)Cantidad(4díg)
+function abbCodigo(cant){
+  const o = abbOcLinea();
+  const q = ("0000" + cant).slice(-4);
+  return "(P)" + o.oc + "(L)" + o.lin + "(Q)" + q;
+}
 const revFmt = datos.rev ? ("REV \u2013 " + datos.rev) : "";
 // Fecha con mes abreviado a 3 letras: "26/September/2026" -> "26/Sep/2026"
 function fechaMesCorto(f){
@@ -316,12 +336,12 @@ function actualizarConteos(){
   }
 }
 function totalEtiquetasVigente(){
-  return paquetes.length*3 + (aplicaIndividual ? datos.totalPzas : 0);
+  return paquetes.length*etiquetasPorJuego + (aplicaIndividual ? datos.totalPzas : 0);
 }
 
 // Banner resumen
 function renderResumen(){
-  const totalEtiquetas = paquetes.length*3 + (aplicaIndividual ? datos.totalPzas : 0);
+  const totalEtiquetas = paquetes.length*etiquetasPorJuego + (aplicaIndividual ? datos.totalPzas : 0);
   document.getElementById('summaryBanner').innerHTML=
     `<div><div class="np">${datos.np||'—'}</div><div class="meta">${datos.totalPzas} PZAS · ${datos.numPaq} PAQUETE(S) · ${datos.cliente} · ${datos.sede}${aplicaIndividual?` · +${datos.totalPzas} IND. 1.25x1`:''}</div></div>
      <div class="badge">${totalEtiquetas}</div>`;
@@ -332,6 +352,22 @@ renderResumen();
 function preview(cant){
   const lc = datos.cliente ? datos.cliente.toUpperCase() : '';
   const rubio = h => `<img src="logo.png" style="height:${h}px;" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'RUBIO'}))">`;
+  const ocPrev = esEmerson ? datos.oc : (datos.oc + ' ' + datos.linea);
+  const cliImg = datos.cliente?`<img src="${clienteArchivo(datos.cliente)}" style="height:20px;" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'${lc}'}))">`:'';
+  // Etiqueta 2 (siempre)
+  const etq2 = `
+    <div class="emp-lbl emp2">
+      <div class="top">${rubio(16)}<b style="font-size:13px;">|</b><span style="font-size:8px;">MAQUINADOS ESPECIALES RUBIO S.A. DE C.V.</span></div>
+      ${esEmerson?'<div style="font-size:8px;font-weight:700;">"MATERIAL APROBADO"</div>':''}
+      <div class="fch">FECHA: ${datos.fecha}</div>
+      <div class="rowb"><div class="k">NUMERO DE PARTE</div><div class="barcode"></div></div>
+      <div class="rowb"><div class="k">CANTIDAD</div><div class="barcode" style="flex:0 0 90px;"></div></div>
+      <div class="rowb"><div class="k">ORDEN DE COMPRA</div><div class="barcode"></div></div>
+      <div style="text-align:center;margin-top:2px;">${cliImg}</div>
+    </div>`;
+  // Emerson: solo etiqueta 2
+  if(esEmerson){ return `<div class="emp-stack">${etq2}</div>`; }
+  // VERTIV: las tres
   return `<div class="emp-stack">
     <div class="emp-lbl emp1" style="align-items:center;justify-content:center;position:relative;">
       <div style="text-align:center;">
@@ -340,18 +376,11 @@ function preview(cant){
       </div>
       <div style="position:absolute;right:6px;bottom:5px;">${rubio(22)}</div>
     </div>
-    <div class="emp-lbl emp2">
-      <div class="top">${rubio(16)}<b style="font-size:13px;">|</b><span style="font-size:8px;">MAQUINADOS ESPECIALES RUBIO S.A. DE C.V.</span></div>
-      <div class="fch">FECHA: ${datos.fecha}</div>
-      <div class="rowb"><div class="k">NUMERO DE PARTE</div><div class="barcode"></div></div>
-      <div class="rowb"><div class="k">CANTIDAD</div><div class="barcode" style="flex:0 0 90px;"></div></div>
-      <div class="rowb"><div class="k">ORDEN DE COMPRA</div><div class="barcode"></div></div>
-      <div style="text-align:center;margin-top:2px;">${datos.cliente?`<img src="${clienteArchivo(datos.cliente)}" style="height:20px;" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'${lc}'}))">`:''}</div>
-    </div>
+    ${etq2}
     <div class="emp-lbl emp3" style="position:relative;">
       <div class="np" style="font-size:26px;">${datos.np}</div>
       <div class="pz" style="font-size:18px;">${cant} PIEZAS</div>
-      <div style="font-size:14px;font-weight:800;">${datos.oc} ${datos.linea}</div>
+      <div style="font-size:14px;font-weight:800;">${ocPrev}</div>
       <div style="position:absolute;right:6px;bottom:5px;">${rubio(20)}</div>
     </div>
   </div>`;
@@ -370,6 +399,85 @@ function agruparPaquetes(){
   return grupos;
 }
 function renderLabels(){
+  // ── Caso ABB: 4 etiquetas ──
+  if(esAbb){
+    const rubio = h => `<img src="logo.png" style="height:${h}px;" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'RUBIO'}))">`;
+    const o = abbOcLinea();
+    const linNum = parseInt(o.lin,10).toString();
+    const cantEj = paquetes[0] || 1;
+    let html = `<div class="label-card">
+      <div class="label-card-head"><span class="ocl">${o.oc} · L${linNum}</span><span class="npr">Grande 4×6 · 1 por paquete</span></div>
+      <div class="preview-wrap"><div style="width:150px;height:220px;background:#fff;color:#000;border-radius:4px;padding:8px;font-family:Arial;display:flex;flex-direction:column;justify-content:space-between;">
+        <div style="display:flex;gap:6px;align-items:center;">${rubio(14)}<span style="font-size:6px;">MAQUINADOS ESPECIALES RUBIO S.A. DE C.V.</span></div>
+        <div style="height:60px;background:repeating-linear-gradient(90deg,#000 0,#000 1.5px,#fff 1.5px,#fff 3px);"></div>
+        <div style="font-size:6px;text-align:center;">(P)${o.oc}(L)${o.lin}(Q)${('0000'+cantEj).slice(-4)}</div>
+        <div style="font-size:5px;text-align:center;">LAGO ISEO #252 COL. ANAHUAC C.P. 11320 MEX. CDMX.</div>
+      </div></div>
+      <div class="tam-label">4 × 6 in · código (P)(L)(Q) · 1 por paquete</div>
+    </div>
+    <div class="label-card">
+      <div class="label-card-head"><span class="ocl">Amarilla</span><span class="npr">2×4 · 1 por paquete</span></div>
+      <div class="preview-wrap"><div style="width:200px;height:100px;background:#ffe600;color:#000;border-radius:4px;padding:8px;font-family:Arial;display:flex;flex-direction:column;justify-content:center;gap:3px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">${rubio(14)}<span style="font-weight:800;font-size:14px;">${cantEj} PIEZAS</span></div>
+        <div style="font-weight:800;font-size:14px;">${datos.np}</div>
+        <div style="font-size:12px;">O.C ${o.oc}</div>
+      </div></div>
+      <div class="tam-label">2 × 4 in · 1 por paquete</div>
+    </div>
+    <div class="label-card">
+      <div class="label-card-head"><span class="ocl">Chica LINEA + Chica NP</span><span class="npr">1.25×1 · una por pieza c/u</span></div>
+      <div class="preview-wrap"><div style="display:flex;gap:6px;">
+        <div style="width:80px;height:64px;background:#fff;color:#000;border-radius:3px;padding:6px;font-family:Arial;display:flex;flex-direction:column;justify-content:center;">
+          <div style="font-size:9px;font-weight:700;">LINEA</div><div style="font-size:16px;font-weight:800;">${linNum}</div>
+        </div>
+        <div style="width:80px;height:64px;background:#fff;color:#000;border-radius:3px;padding:6px;font-family:Arial;display:flex;flex-direction:column;justify-content:center;gap:2px;">
+          <div style="font-size:9px;font-weight:800;">${datos.np}</div><div style="font-size:10px;font-weight:700;">1 PIEZA</div>
+        </div>
+      </div></div>
+      <div class="tam-label">1.25 × 1 in · LINEA y NP, una por cada pieza (${datos.totalPzas} c/u)</div>
+    </div>`;
+    document.getElementById('labelsList').innerHTML=html;
+    return;
+  }
+  // ── Caso ORTO: 1 mediana de texto + chicas por paquete ──
+  if(esOrto){
+    const rubio = h => `<img src="logo.png" style="height:${h}px;" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'RUBIO'}))">`;
+    const lc = datos.cliente.toUpperCase();
+    const cliImg = `<img src="${clienteArchivo(datos.cliente)}" style="height:24px;" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'${lc}'}))">`;
+    let html = `<div class="label-card">
+      <div class="label-card-head"><span class="ocl">${datos.oc}</span><span class="npr">Etiqueta mediana (total)</span></div>
+      <div class="preview-wrap">
+        <div class="emp-lbl emp2" style="height:auto;min-height:130px;">
+          <div class="top">${rubio(16)}<b style="font-size:13px;">|</b><span style="font-size:8px;">MAQUINADOS ESPECIALES RUBIO S.A. DE C.V.</span></div>
+          <div style="font-size:8px;font-weight:700;">"MATERIAL APROBADO"</div>
+          <div class="fch">FECHA: ${datos.fecha}</div>
+          <div style="font-size:8px;"><b>NUMERO DE PARTE:</b> ${datos.np}</div>
+          <div style="font-size:8px;"><b>DESCRIPCION:</b> ${datos.desc}</div>
+          <div style="font-size:8px;"><b>CANTIDAD:</b> ${datos.totalPzas}</div>
+          <div style="font-size:8px;"><b>ORDEN DE COMPRA:</b> ${datos.oc}</div>
+          <div style="text-align:right;">${cliImg}</div>
+        </div>
+      </div>
+      <div class="tam-label">2 × 4 in · solo texto · 1 etiqueta (total de la orden)</div>
+    </div>
+    <div class="label-card">
+      <div class="label-card-head"><span class="ocl">Etiquetas chicas</span><span class="npr">${paquetes.length} etiqueta(s), 1 por paquete</span></div>
+      <div class="preview-wrap"><div style="display:flex;gap:6px;">
+        ${paquetes.slice(0,3).map(q=>`
+          <div style="width:80px;height:64px;background:#fff;color:#000;border-radius:3px;padding:4px 5px;font-family:Arial,sans-serif;display:flex;flex-direction:column;justify-content:center;gap:1px;position:relative;">
+            <div style="font-weight:800;font-size:9px;">${datos.np}</div>
+            <div style="font-size:6px;">${revFmt}</div>
+            <div style="font-size:6px;font-weight:600;">${datos.desc}</div>
+            <div style="font-size:6px;">${q} PZAS</div>
+            <div style="font-size:5px;">${fechaCorta}</div>
+            <div style="position:absolute;right:3px;bottom:3px;">${rubio(8)}</div>
+          </div>`).join('')}
+      </div></div>
+      <div class="tam-label">1.25 × 1 in · 3 por línea · una por paquete (con su cantidad)</div>
+    </div>`;
+    document.getElementById('labelsList').innerHTML=html;
+    return;
+  }
   const grupos = agruparPaquetes();
   const totalPaq = paquetes.length;
   let html='';
@@ -384,7 +492,7 @@ function renderLabels(){
     html+=`<div class="label-card">
       <div class="label-card-head"><span class="ocl">${datos.ocLinea}</span><span class="npr">${titulo}</span></div>
       <div class="preview-wrap">${preview(cant)}</div>
-      <div class="tam-label">${tamNombre} · juego de 3 etiquetas · ${copiasTxt}</div>
+      <div class="tam-label">${tamNombre} · ${esEmerson?'1 etiqueta':'juego de 3 etiquetas'} · ${copiasTxt}</div>
       <div class="fields">
         <div class="field"><div class="k">Número de Parte</div><div class="v">${datos.np}</div></div>
         <div class="field"><div class="k">Cantidad paquete</div><div class="v">${cant} pzas</div></div>
@@ -456,7 +564,7 @@ async function conectar(){
     name.textContent=(allDevices[0].name||allDevices[0].uid);
     debugLog('Impresoras: '+allDevices.map(d=>d.name||d.uid).join(', '));
     llenarSelects();
-    btn.className='print-btn ready'; btn.disabled=false; btn.textContent=`⬡ IMPRIMIR TODAS (${paquetes.length*3} ETIQUETAS)`;
+    btn.className='print-btn ready'; btn.disabled=false; btn.textContent=`⬡ IMPRIMIR TODAS (${paquetes.length*etiquetasPorJuego} ETIQUETAS)`;
   }catch(e){
     dot.className='status-dot error'; label.textContent='Error de conexión'; debugLog('Error: '+e.message);
   }
@@ -562,10 +670,14 @@ function zplEtiqueta2(c){
   } else {
     cliZpl = `^CF0,30,30\n^FO660,220^FD${lc}^FS`;
   }
-  // Módulo adaptativo de barras (ancho disponible ~380 dots antes del VERTIV)
+  // Módulo adaptativo de barras (ancho disponible ~380 dots antes del logo cliente)
+  // Para Emerson, la OC va sin línea (solo datos.oc)
+  const ocParaBarras = esEmerson ? datos.oc : datos.ocLinea;
   const modNP = moduloBarras(datos.np, 420);
   const modCant = moduloBarras(c.toString(), 420);
-  const modOC = moduloBarras(datos.ocLinea, 420);
+  const modOC = moduloBarras(ocParaBarras, 420);
+  // Leyenda "MATERIAL APROBADO" solo para Emerson (debajo de la razón social)
+  const leyenda = esEmerson ? `^CF0,26,26\n^FO${xRazon},72^FD"MATERIAL APROBADO"^FS` : '';
   return `^XA
 ^CI28
 ${ZPL_CFG}
@@ -576,6 +688,7 @@ ${rubioZpl}
 ^FO${xSep},30^FD|^FS
 ^CF0,26,26
 ^FO${xRazon},35^FB520,2,0,L,0^FDMAQUINADOS ESPECIALES RUBIO S.A. DE C.V.^FS
+${leyenda}
 ^CF0,26,26
 ^FO40,100^FDFECHA: ${datos.fecha}^FS
 ^CF0,28,28
@@ -592,7 +705,7 @@ ${rubioZpl}
 ^FO40,320^FDORDEN DE COMPRA^FS
 ^CF0,30,30
 ^BY${modOC},2,30
-^FO280,318^BCN,30,Y,N,N^FD${datos.ocLinea}^FS
+^FO280,318^BCN,30,Y,N,N^FD${ocParaBarras}^FS
 ${cliZpl}
 ^XZ`;}
 
@@ -620,11 +733,91 @@ ${rubioZpl}
 ^XZ`;}
 
 
+// ═══ Etiquetas ABB ═══
+// 1. Grande 4x6 (812x1218 dots): RUBIO, razón social, código (P)(L)(Q), dirección
+function zplAbbGrande(cant){
+  const gfRubio = gfCache['logo.png'];
+  const rubioZpl = gfRubio ? `^FO40,40${gfRubio.gf}` : `^CF0,60,60\n^FO40,50^FDRUBIO^FS`;
+  const codigo = abbCodigo(cant);
+  return `^XA
+^CI28
+${ZPL_CFG}
+^PW812
+^LL1218
+${rubioZpl}
+^CF0,30,30
+^FO300,60^FB480,3,0,L,0^FDMAQUINADOS ESPECIALES RUBIO S.A. DE C.V.^FS
+^BY3,2,180
+^FO60,420^BCN,180,Y,N,N^FD${codigo}^FS
+^CF0,26,26
+^FO40,1120^FB740,2,0,C,0^FDLAGO ISEO #252 COL. ANAHUAC C.P. 11320 MEX. CDMX. E-MAIL mersa@prodigy.net.mx^FS
+^XZ`;
+}
+// 2. Amarilla 2x4: RUBIO, cantidad del paquete, NP, OC
+function zplAbbAmarilla(cant){
+  const gfRubio = gfCache['logo.png'];
+  const rubioZpl = gfRubio ? `^FO30,25${gfRubio.gf}` : `^CF0,50,50\n^FO30,30^FDRUBIO^FS`;
+  const o = abbOcLinea();
+  return `^XA
+^CI28
+${ZPL_CFG}
+^PW812
+^LL406
+${rubioZpl}
+^CF0,60,60
+^FO440,40^FD${cant} PIEZA${cant>1?'S':''}^FS
+^CF0,60,60
+^FO40,180^FD${datos.np}^FS
+^CF0,55,55
+^FO40,290^FDO.C ${o.oc}^FS
+^XZ`;
+}
+// 3. Chica LINEA 1.25x1 (3 por línea): "LINEA" + número
+function bloqueAbbLinea(xOff){
+  const o = abbOcLinea();
+  const linNum = parseInt(o.lin,10).toString();
+  return `^CF0,40,40
+^FO${xOff+20},40^FDLINEA^FS
+^CF0,60,60
+^FO${xOff+20},95^FD${linNum}^FS`;
+}
+function zplAbbLineas(){
+  const total = datos.totalPzas;
+  const anchoCol = 254;
+  let out=""; let i=0;
+  while(i<total){
+    let b=`^XA\n^CI28\n${ZPL_CFG}\n^PW762\n^LL203\n`;
+    for(let col=0; col<3 && i<total; col++, i++){ b += bloqueAbbLinea(col*anchoCol)+"\n"; }
+    b+="^XZ\n"; out+=b;
+  }
+  return out;
+}
+// 4. Chica NP 1.25x1 (3 por línea): NP + "1 PIEZA", una por pieza
+function bloqueAbbNp(xOff){
+  const fNP = fuenteAdaptativa(datos.np, 230, 34, 16);
+  return `^CF0,${fNP},${fNP}
+^FO${xOff+20},45^FD${datos.np}^FS
+^CF0,34,34
+^FO${xOff+20},110^FD1 PIEZA^FS`;
+}
+function zplAbbNps(){
+  const total = datos.totalPzas;
+  const anchoCol = 254;
+  let out=""; let i=0;
+  while(i<total){
+    let b=`^XA\n^CI28\n${ZPL_CFG}\n^PW762\n^LL203\n`;
+    for(let col=0; col<3 && i<total; col++, i++){ b += bloqueAbbNp(col*anchoCol)+"\n"; }
+    b+="^XZ\n"; out+=b;
+  }
+  return out;
+}
+
 // ── Etiqueta individual 1.25x1 (3 columnas por línea) ──
-function bloqueIndividual(xOff){
+function bloqueIndividual(xOff, cantTxt){
   const gfRubio = gfCache['logo_small'] || gfCache['logo.png'];
   let rubioZpl = gfRubio ? `^FO${xOff+140},135${gfRubio.gf}` : `^CF0,18,18\n^FO${xOff+140},140^FDRUBIO^FS`;
   const fNP = fuenteAdaptativa(datos.np, 230, 30, 14);
+  const cantMostrar = cantTxt || "1 PIEZA";
   return `^CF0,${fNP},${fNP}
 ^FO${xOff+15},12^FD${datos.np}^FS
 ^CF0,20,20
@@ -632,7 +825,7 @@ function bloqueIndividual(xOff){
 ^CF0,20,20
 ^FO${xOff+15},80^FB230,1,0,L,0^FD${datos.desc}^FS
 ^CF0,20,20
-^FO${xOff+15},112^FD1 PIEZA^FS
+^FO${xOff+15},112^FD${cantMostrar}^FS
 ^CF0,20,20
 ^FO${xOff+15},144^FD${fechaCorta}^FS
 ${rubioZpl}`;
@@ -652,7 +845,28 @@ ${ZPL_CFG}
 ^LL203
 `;
     for(let col=0; col<3 && i<total; col++, i++){
-      bloque += bloqueIndividual(col*anchoCol) + "\n";
+      bloque += bloqueIndividual(col*anchoCol, "1 PIEZA") + "\n";
+    }
+    bloque += "^XZ\n";
+    out += bloque;
+  }
+  return out;
+}
+// Chicas de ORTO: una por paquete, con la cantidad de ese paquete
+function zplIndividualesOrto(){
+  if(!esOrto) return "";
+  const anchoCol = 254;
+  let out = "";
+  let i = 0;
+  while(i < paquetes.length){
+    let bloque = `^XA
+^CI28
+${ZPL_CFG}
+^PW762
+^LL203
+`;
+    for(let col=0; col<3 && i<paquetes.length; col++, i++){
+      bloque += bloqueIndividual(col*anchoCol, paquetes[i] + " PZAS") + "\n";
     }
     bloque += "^XZ\n";
     out += bloque;
@@ -660,7 +874,10 @@ ${ZPL_CFG}
   return out;
 }
 
-function zplJuego(c){return zplEtiqueta1(c)+'\n'+zplEtiqueta2(c)+'\n'+zplEtiqueta3(c)+'\n';}
+function zplJuego(c){
+  if(esEmerson){ return zplEtiqueta2(c)+'\n'; }
+  return zplEtiqueta1(c)+'\n'+zplEtiqueta2(c)+'\n'+zplEtiqueta3(c)+'\n';
+}
 
 async function enviarZPL(device,zpl){
   const res=await fetch(BP_BASE+'/write',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({device:device,data:zpl})});
@@ -725,12 +942,62 @@ ${ZPL_CFG}
 async function imprimirTodo(){
   const rv = leerReacomodo();
   if(!rv.vacio && !rv.valido){ showMessage('El reacomodo no cuadra: ' + rv.msg, 'error'); return; }
-  const device=deviceParaTamano(datos.tam);
-  if(!device){showMessage('No hay impresora para el tamaño '+datos.tam+'. Configúrala y guarda.','error');return;}
   await precargarLogos();
   const copies=parseInt(document.getElementById('copies').value)||1;
   const btn=document.getElementById('printBtn'); btn.className='print-btn disabled'; btn.disabled=true;
-  const total=paquetes.length*3*copies;
+
+  // ── Caso ORTO: 1 mediana (total) + chicas por paquete ──
+  if(esOrto){
+    const devMed = deviceParaTamano('2x4');
+    if(!devMed){ showMessage('No hay impresora 2x4 para la etiqueta mediana de ORTO.','error'); btn.disabled=false; return; }
+    btn.textContent='ENVIANDO...';
+    try{
+      // Mediana: una vez (× copias)
+      let med=''; for(let k=0;k<copies;k++) med+=zplMedianaOrto()+'\n';
+      await enviarZPL(devMed, med);
+      // Chicas: una por paquete, a la impresora 1.25x1
+      const devInd = deviceParaTamano('1.25x1');
+      const zplInd = zplIndividualesOrto();
+      if(devInd && zplInd){
+        await enviarZPL(devInd, zplInd);
+      } else if(!devInd){
+        showMessage('Faltó asignar impresora 1.25x1 para las etiquetas chicas de ORTO.','error');
+      }
+      btn.className='print-btn success'; btn.textContent='✓ ETIQUETAS ENVIADAS';
+      showMessage('ORTO: 1 mediana + '+paquetes.length+' chicas enviadas.','ok');
+    }catch(e){btn.className='print-btn ready'; btn.disabled=false; btn.textContent='⬡ IMPRIMIR TODAS'; showMessage('Error: '+e.message,'error'); debugLog('Error: '+e.message);}
+    return;
+  }
+
+  // ── Caso ABB: grande(4x6) + amarilla(2x4) por paquete; LINEA y NP (1.25x1) por pieza ──
+  if(esAbb){
+    const dev4x6 = deviceParaTamano('4x6');
+    const dev2x4 = deviceParaTamano('2x4');
+    const dev125 = deviceParaTamano('1.25x1');
+    btn.textContent='ENVIANDO...';
+    try{
+      // Grande 4x6: una por paquete
+      if(dev4x6){
+        let g=''; for(let i=0;i<paquetes.length;i++){ for(let k=0;k<copies;k++) g+=zplAbbGrande(paquetes[i])+'\n'; }
+        await enviarZPL(dev4x6, g);
+      } else { showMessage('Falta impresora 4x6 para la etiqueta grande de ABB.','error'); }
+      // Amarilla 2x4: una por paquete
+      if(dev2x4){
+        let a=''; for(let i=0;i<paquetes.length;i++){ for(let k=0;k<copies;k++) a+=zplAbbAmarilla(paquetes[i])+'\n'; }
+        await enviarZPL(dev2x4, a);
+      } else { showMessage('Falta impresora 2x4 para la etiqueta amarilla de ABB.','error'); }
+      // Chicas LINEA y NP: una por pieza, a la 1.25x1
+      if(dev125){
+        await enviarZPL(dev125, zplAbbLineas());
+        await enviarZPL(dev125, zplAbbNps());
+      } else { showMessage('Falta impresora 1.25x1 para las etiquetas chicas de ABB.','error'); }
+      btn.className='print-btn success'; btn.textContent='✓ ETIQUETAS ENVIADAS';
+      showMessage('ABB: grande + amarilla por paquete, y chicas LINEA/NP por pieza enviadas.','ok');
+    }catch(e){btn.className='print-btn ready'; btn.disabled=false; btn.textContent='⬡ IMPRIMIR TODAS'; showMessage('Error: '+e.message,'error'); debugLog('Error: '+e.message);}
+    return;
+  }
+
+  const device=deviceParaTamano(datos.tam);
   btn.textContent=`ENVIANDO ${total} ETIQUETAS...`;
   debugLog('Imprimiendo todo: '+total+' etiquetas en '+(device.name||device.uid));
   try{

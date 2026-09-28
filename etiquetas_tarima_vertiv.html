@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Etiquetas de Tarima - RUBIO</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap');
+:root{--bg:#0c0f14;--surface:#141820;--surface2:#1a2030;--border:#2a3348;--amber:#3b82f6;--green:#34d399;--red:#f87171;--text:#e2e8f0;--text-dim:#64748b;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;align-items:center;}
+.header{width:100%;background:linear-gradient(135deg,var(--surface),var(--surface2));border-bottom:1px solid var(--border);padding:14px 24px;}
+.header h1{font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:700;color:var(--amber);letter-spacing:1.5px;}
+.header span{font-size:11px;color:var(--text-dim);font-family:'IBM Plex Mono',monospace;letter-spacing:2px;}
+.container{width:100%;max-width:600px;padding:20px 16px 60px;}
+.printer-status{display:flex;justify-content:space-between;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:16px;}
+.printer-status .left{display:flex;align-items:center;gap:12px;}
+.status-dot{width:10px;height:10px;border-radius:50%;}
+.status-dot.searching{background:var(--amber);animation:pulse 1.2s infinite;}
+.status-dot.connected{background:var(--green);}
+.status-dot.error{background:var(--red);}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+.btn-retry{background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px 14px;font-size:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;}
+.printer-map{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:16px;}
+.printer-map h3{font-size:11px;color:var(--text-dim);font-family:'IBM Plex Mono',monospace;letter-spacing:1px;margin-bottom:10px;}
+.map-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.map-row label{min-width:90px;font-size:12px;color:var(--text-dim);}
+.map-row select{flex:1;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px 8px;font-size:12px;font-family:inherit;}
+.map-actions{display:flex;gap:8px;margin-top:6px;}
+.map-actions button{background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer;}
+.section-title{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--amber);letter-spacing:1.5px;margin-bottom:12px;}
+.label-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:14px;}
+.label-card-head{display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:12px;margin-bottom:14px;}
+.label-card-head .ocl{color:var(--amber);}
+.label-card-head .npr{color:var(--text-dim);}
+.preview-wrap{display:flex;justify-content:center;margin-bottom:6px;}
+.tam-label{text-align:center;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-dim);margin-bottom:14px;}
+.print-btn{width:100%;padding:16px;border:none;border-radius:10px;font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:700;letter-spacing:1px;cursor:pointer;background:var(--amber);color:#fff;}
+.print-btn.disabled{opacity:.5;cursor:not-allowed;}
+.print-btn.success{background:var(--green);color:#04231a;}
+.msg{margin-top:14px;padding:10px 14px;border-radius:8px;font-size:12px;}
+.msg.error{background:rgba(248,113,113,.12);color:var(--red);border:1px solid rgba(248,113,113,.3);}
+.msg.ok{background:rgba(52,211,153,.12);color:var(--green);border:1px solid rgba(52,211,153,.3);}
+#debug{font-family:monospace;font-size:11px;color:var(--text-dim);background:#0a0d12;border:1px solid var(--border);border-radius:8px;padding:10px;max-height:160px;overflow:auto;margin-top:12px;white-space:pre-wrap;}
+/* Preview etiqueta negra */
+.lbl-black{width:150px;min-height:200px;background:#111;color:#fff;border-radius:4px;padding:12px;font-family:Arial;display:flex;flex-direction:column;gap:4px;}
+.lbl-black .big{font-weight:900;font-size:20px;line-height:1;}
+.lbl-black .huge{font-weight:900;font-size:44px;line-height:1;text-align:center;margin:8px 0;}
+.lbl-black .sm{font-size:12px;font-weight:700;}
+</style>
+</head>
+<body>
+<div class="header"><h1>ETIQUETAS DE TARIMA</h1><span>ZEBRA BROWSER PRINT</span></div>
+<div class="container">
+  <div class="printer-status">
+    <div class="left"><div class="status-dot searching" id="statusDot"></div>
+      <div><div id="statusLabel" style="font-size:13px;font-weight:600;">Buscando impresora...</div>
+      <div id="printerName" style="font-size:11px;color:var(--text-dim);font-family:monospace;">—</div></div></div>
+    <button class="btn-retry" onclick="conectar()">Reintentar</button>
+  </div>
+  <div class="printer-map">
+    <h3>IMPRESORA PARA ETIQUETA DE TARIMA</h3>
+    <div class="map-row"><label>Etiqueta</label><select id="printer_tarima"></select></div>
+    <div class="map-actions"><button onclick="guardarConfig()">Guardar</button><button onclick="conectar()">Actualizar</button></div>
+  </div>
+  <div class="section-title">▸ ETIQUETA A IMPRIMIR</div>
+  <div id="labelsList"></div>
+  <button class="print-btn disabled" id="printBtn" onclick="imprimir()" disabled>BUSCANDO IMPRESORA...</button>
+  <div id="messageArea"></div>
+  <div id="debug"></div>
+</div>
+<script>
+const P=new URLSearchParams(window.location.search);
+const datos={
+  tarima:P.get('tarima')||'',        // valor del campo Tarima (ej. "Packing Delaware" o "Tarima 5")
+  numTarima:P.get('nt')||'',         // número de tarima
+  folio:P.get('folio')||'',          // folio de tarima
+  ocs:P.get('ocs')||'',              // OCs (sin línea) separadas por coma
+  nps:P.get('nps')||'',              // NPs separados por coma
+};
+const BP_BASE="https://localhost:9101";
+let allDevices=[];
+function debugLog(m){const el=document.getElementById('debug');el.textContent+=`[${new Date().toLocaleTimeString()}] ${m}\n`;el.scrollTop=el.scrollHeight;}
+function showMessage(m,t){document.getElementById('messageArea').innerHTML=`<div class="msg ${t}">${m}</div>`;}
+
+// ¿Es packing? El campo Tarima empieza con "Packing"
+const esPacking = datos.tarima.toLowerCase().startsWith('packing');
+// Nombre del packing (lo que sigue de "Packing ")
+function nombrePacking(){
+  const t = datos.tarima.trim();
+  const p = t.replace(/^packing\s*/i,'').toUpperCase();
+  return p;
+}
+const ocsArr = datos.ocs ? datos.ocs.split(',').filter(x=>x) : [];
+const npsArr = datos.nps ? datos.nps.split(',').filter(x=>x) : [];
+
+function renderLabel(){
+  let html='';
+  if(esPacking){
+    const ocLines = ocsArr.map(o=>`<div class="sm">P.O ${o}</div>`).join('');
+    const npLines = npsArr.map(n=>`<div class="big">${n}</div>`).join('');
+    html=`<div class="label-card">
+      <div class="label-card-head"><span class="ocl">PALLET ${nombrePacking()}</span><span class="npr">Tarima ${datos.numTarima}</span></div>
+      <div class="preview-wrap"><div class="lbl-black">
+        <div class="big">PALLET</div>
+        <div class="big">${nombrePacking()}</div>
+        <div class="huge">${datos.numTarima}</div>
+        ${ocLines}
+        ${npLines}
+      </div></div>
+      <div class="tam-label">Etiqueta PALLET (Packing)</div>
+    </div>`;
+  } else {
+    html=`<div class="label-card">
+      <div class="label-card-head"><span class="ocl">TARIMA MERSA</span><span class="npr">Folio ${datos.folio}</span></div>
+      <div class="preview-wrap"><div class="lbl-black" style="justify-content:center;text-align:center;">
+        <div class="big">TARIMA</div>
+        <div class="big">MERSA</div>
+        <div class="huge">${datos.folio}</div>
+      </div></div>
+      <div class="tam-label">Etiqueta TARIMA MERSA + Folio (no packing)</div>
+    </div>`;
+  }
+  document.getElementById('labelsList').innerHTML=html;
+}
+renderLabel();
+
+async function conectar(){
+  const dot=document.getElementById('statusDot'),label=document.getElementById('statusLabel'),name=document.getElementById('printerName'),btn=document.getElementById('printBtn');
+  dot.className='status-dot searching';label.textContent='Buscando impresora...';allDevices=[];
+  try{
+    let defaultDevice=null;
+    try{const r=await fetch(BP_BASE+'/default?type=printer');if(r.ok)defaultDevice=await r.json();}catch(e){}
+    let list=[];
+    try{const r=await fetch(BP_BASE+'/available?type=printer');if(r.ok){const ld=await r.json();list=Array.isArray(ld)?ld:(ld.printer||ld.devices||[]);}}catch(e){}
+    if(defaultDevice&&(defaultDevice.name||defaultDevice.uid)&&list.length===0)list=[defaultDevice];
+    allDevices=list;
+    if(allDevices.length===0){
+      dot.className='status-dot error';label.textContent='Sin impresoras';
+      name.innerHTML='Abre Browser Print y acepta el certificado en <a href="https://localhost:9101/ssl_support" target="_blank" style="color:var(--amber)">localhost:9101/ssl_support</a>';
+      btn.className='print-btn disabled';btn.disabled=true;btn.textContent='SIN IMPRESORA';return;
+    }
+    dot.className='status-dot connected';label.textContent='Impresora conectada';name.textContent=(allDevices[0].name||allDevices[0].uid);
+    llenarSelect();
+    btn.className='print-btn';btn.disabled=false;btn.textContent='⬡ IMPRIMIR ETIQUETA';
+  }catch(e){dot.className='status-dot error';label.textContent='Error de conexión';debugLog('Error: '+e.message);}
+}
+function llenarSelect(){
+  const sel=document.getElementById('printer_tarima');const g=JSON.parse(localStorage.getItem('tarima_printer')||'{}');
+  sel.innerHTML='<option value="">— Seleccionar —</option>';
+  allDevices.forEach((d,i)=>{const o=document.createElement('option');o.value=d.uid||i;o.textContent=d.name||d.uid;sel.appendChild(o);});
+  if(g.printer_tarima)sel.value=g.printer_tarima;
+}
+function guardarConfig(){localStorage.setItem('tarima_printer',JSON.stringify({printer_tarima:document.getElementById('printer_tarima').value}));showMessage('Impresora guardada.','ok');}
+function deviceTarima(){const g=JSON.parse(localStorage.getItem('tarima_printer')||'{}');let d=allDevices.find(x=>(x.uid||'')===g.printer_tarima);if(!d&&allDevices.length>0)d=allDevices[0];return d||null;}
+
+// ZPL etiqueta PALLET (4x6 = 812x1218). Fondo negro con texto invertido.
+function zplPallet(){
+  let y=90;
+  let ocZpl='';
+  ocsArr.forEach(o=>{ ocZpl+=`^FO60,${y}^CF0,50,50^FR^FDP.O ${o}^FS\n`; y+=60; });
+  let npZpl='';
+  npsArr.forEach(n=>{ npZpl+=`^FO60,${y}^CF0,70,70^FR^FD${n}^FS\n`; y+=80; });
+  return `^XA
+^CI28
+^PR3^MD12
+^PW812
+^LL1218
+^FO0,0^GB812,1218,1218,B^FS
+^CF0,90,90
+^FO60,60^FR^FDPALLET^FS
+^CF0,70,70
+^FO60,170^FR^FD${nombrePacking()}^FS
+^CF0,300,300
+^FO0,290^FB812,1,0,C,0^FR^FD${datos.numTarima}^FS
+${ocZpl}
+${npZpl}
+^XZ`;
+}
+// ZPL etiqueta TARIMA MERSA + folio (4x6). Fondo negro.
+function zplTarimaMersa(){
+  return `^XA
+^CI28
+^PR3^MD12
+^PW812
+^LL1218
+^FO0,0^GB812,1218,1218,B^FS
+^CF0,150,150
+^FO0,300^FB812,1,0,C,0^FR^FDTARIMA^FS
+^FO0,470^FB812,1,0,C,0^FR^FDMERSA^FS
+^CF0,200,200
+^FO0,680^FB812,1,0,C,0^FR^FD${datos.folio}^FS
+^XZ`;
+}
+async function enviarZPL(device,zpl){
+  const res=await fetch(BP_BASE+'/write',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({device:device,data:zpl})});
+  if(!res.ok){throw new Error('Status '+res.status+': '+await res.text());}
+}
+async function imprimir(){
+  const device=deviceTarima();
+  if(!device){showMessage('No hay impresora asignada. Configúrala y guarda.','error');return;}
+  const btn=document.getElementById('printBtn');btn.className='print-btn disabled';btn.disabled=true;btn.textContent='ENVIANDO...';
+  try{
+    const zpl = esPacking ? zplPallet() : zplTarimaMersa();
+    await enviarZPL(device,zpl);
+    btn.className='print-btn success';btn.textContent='✓ ETIQUETA ENVIADA';
+    showMessage('Etiqueta enviada.','ok');
+  }catch(e){btn.className='print-btn';btn.disabled=false;btn.textContent='⬡ IMPRIMIR ETIQUETA';showMessage('Error: '+e.message,'error');debugLog('Error: '+e.message);}
+}
+conectar();
+</script>
+</body>
+</html>

@@ -3,219 +3,1078 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Etiquetas de Tarima - RUBIO</title>
+<title>Imprimir Etiquetas de Empaque - RUBIO</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap');
-:root{--bg:#0c0f14;--surface:#141820;--surface2:#1a2030;--border:#2a3348;--amber:#3b82f6;--green:#34d399;--red:#f87171;--text:#e2e8f0;--text-dim:#64748b;}
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=DM+Sans:wght@400;500;700&family=Roboto:wght@400;500;700;900&display=swap');
+:root{
+  --bg:#0c0f14; --surface:#141820; --surface2:#1a2030; --border:#2a3348;
+  --amber:#3b82f6; --amber-dim:#2563eb; --green:#34d399; --red:#f87171;
+  --text:#e2e8f0; --text-dim:#64748b;
+}
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;align-items:center;}
-.header{width:100%;background:linear-gradient(135deg,var(--surface),var(--surface2));border-bottom:1px solid var(--border);padding:14px 24px;}
-.header h1{font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:700;color:var(--amber);letter-spacing:1.5px;}
-.header span{font-size:11px;color:var(--text-dim);font-family:'IBM Plex Mono',monospace;letter-spacing:2px;}
-.container{width:100%;max-width:600px;padding:20px 16px 60px;}
+.header{width:100%;background:linear-gradient(135deg,var(--surface) 0%,var(--surface2) 100%);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;gap:14px;}
+.header-icon{height:36px;display:flex;align-items:center;}
+.header-icon img{height:36px;width:auto;display:block;}
+.header-text h1{font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:700;color:var(--amber);letter-spacing:1.5px;}
+.header-text span{font-size:11px;color:var(--text-dim);font-family:'IBM Plex Mono',monospace;letter-spacing:2px;}
+.container{width:100%;max-width:640px;padding:20px 16px 60px;}
 .printer-status{display:flex;justify-content:space-between;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:16px;}
 .printer-status .left{display:flex;align-items:center;gap:12px;}
-.status-dot{width:10px;height:10px;border-radius:50%;}
+.status-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
 .status-dot.searching{background:var(--amber);animation:pulse 1.2s infinite;}
 .status-dot.connected{background:var(--green);}
 .status-dot.error{background:var(--red);}
 @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+.status-label{font-size:13px;font-weight:600;}
+.printer-name{font-size:11px;color:var(--text-dim);font-family:'IBM Plex Mono',monospace;}
 .btn-retry{background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px 14px;font-size:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;}
 .printer-map{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:16px;}
 .printer-map h3{font-size:11px;color:var(--text-dim);font-family:'IBM Plex Mono',monospace;letter-spacing:1px;margin-bottom:10px;}
 .map-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
 .map-row label{min-width:90px;font-size:12px;color:var(--text-dim);}
+.map-row input{background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px 8px;font-size:12px;font-family:inherit;}
 .map-row select{flex:1;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px 8px;font-size:12px;font-family:inherit;}
 .map-actions{display:flex;gap:8px;margin-top:6px;}
 .map-actions button{background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer;}
+.summary-banner{background:linear-gradient(135deg,rgba(59,130,246,.12),rgba(37,99,235,.05));border:1px solid rgba(59,130,246,.3);border-radius:10px;padding:16px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;}
+.summary-banner .np{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:700;color:var(--amber);}
+.summary-banner .meta{font-size:12px;color:var(--text-dim);font-family:'IBM Plex Mono',monospace;margin-top:4px;letter-spacing:1px;}
+.summary-banner .badge{background:var(--amber);color:#fff;font-weight:700;font-size:16px;border-radius:8px;padding:8px 14px;font-family:'IBM Plex Mono',monospace;}
 .section-title{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--amber);letter-spacing:1.5px;margin-bottom:12px;}
 .label-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:14px;}
 .label-card-head{display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:12px;margin-bottom:14px;}
 .label-card-head .ocl{color:var(--amber);}
 .label-card-head .npr{color:var(--text-dim);}
 .preview-wrap{display:flex;justify-content:center;margin-bottom:6px;}
-.tam-label{text-align:center;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-dim);margin-bottom:14px;}
+.tam-label{text-align:center;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-dim);margin-bottom:14px;letter-spacing:1px;}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;}
+.field{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px 10px;}
+.field .k{font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;}
+.field .v{font-size:13px;font-weight:600;font-family:'IBM Plex Mono',monospace;margin-top:2px;}
+.btn-print-single{width:100%;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:10px;font-size:12px;font-family:'IBM Plex Mono',monospace;letter-spacing:1px;cursor:pointer;}
+.btn-print-single:hover{background:var(--amber);color:#fff;}
+.btn-print-single.success{background:var(--green);color:#04231a;border-color:var(--green);}
+.btn-print-single.error{background:var(--red);color:#2a0a0a;border-color:var(--red);}
+.reacomodo{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px;}
+.reacomodo h3{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--amber);letter-spacing:1px;margin-bottom:4px;}
+.reacomodo .desc{font-size:11px;color:var(--text-dim);margin-bottom:12px;}
+.rea-row{display:flex;gap:8px;align-items:center;margin-bottom:8px;}
+.rea-row .grp{flex:1;}
+.rea-row .grp label{display:block;font-size:9px;color:var(--text-dim);text-transform:uppercase;margin-bottom:2px;}
+.rea-row input{width:100%;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:8px;font-size:14px;font-family:'IBM Plex Mono',monospace;}
+.rea-row .del{background:none;border:none;color:var(--red);font-size:18px;cursor:pointer;padding:0 6px;align-self:flex-end;margin-bottom:4px;}
+.rea-add{background:var(--surface2);color:var(--amber);border:1px dashed var(--border);border-radius:6px;padding:8px;font-size:12px;cursor:pointer;width:100%;margin-top:4px;}
+.rea-check{font-size:11px;font-family:'IBM Plex Mono',monospace;margin-top:10px;padding:8px 10px;border-radius:6px;}
+.rea-check.ok{background:rgba(52,211,153,.12);color:var(--green);}
+.rea-check.bad{background:rgba(248,113,113,.12);color:var(--red);}
+.rea-check.neutral{background:var(--surface2);color:var(--text-dim);}
+.copies-control{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:16px;}
+.copies-control label{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-dim);letter-spacing:1px;}
+.copies-control input{width:70px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:8px;font-size:14px;font-family:'IBM Plex Mono',monospace;}
 .print-btn{width:100%;padding:16px;border:none;border-radius:10px;font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:700;letter-spacing:1px;cursor:pointer;background:var(--amber);color:#fff;}
 .print-btn.disabled{opacity:.5;cursor:not-allowed;}
 .print-btn.success{background:var(--green);color:#04231a;}
+.print-btn.ready{background:var(--amber);}
+.hint{text-align:center;margin-top:8px;font-size:11px;color:var(--text-dim);font-family:'IBM Plex Mono',monospace;}
 .msg{margin-top:14px;padding:10px 14px;border-radius:8px;font-size:12px;}
 .msg.error{background:rgba(248,113,113,.12);color:var(--red);border:1px solid rgba(248,113,113,.3);}
 .msg.ok{background:rgba(52,211,153,.12);color:var(--green);border:1px solid rgba(52,211,153,.3);}
-#debug{font-family:monospace;font-size:11px;color:var(--text-dim);background:#0a0d12;border:1px solid var(--border);border-radius:8px;padding:10px;max-height:160px;overflow:auto;margin-top:12px;white-space:pre-wrap;}
-/* Preview etiqueta negra */
-.lbl-black{width:150px;min-height:200px;background:#111;color:#fff;border-radius:4px;padding:12px;font-family:Arial;display:flex;flex-direction:column;gap:4px;}
-.lbl-black .big{font-weight:900;font-size:20px;line-height:1;}
-.lbl-black .huge{font-weight:900;font-size:44px;line-height:1;text-align:center;margin:8px 0;}
-.lbl-black .sm{font-size:12px;font-weight:700;}
+.debug-panel{margin-top:20px;}
+.debug-toggle{background:none;border:none;color:var(--text-dim);font-family:'IBM Plex Mono',monospace;font-size:12px;cursor:pointer;}
+.debug-content{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-dim);background:#0a0d12;border:1px solid var(--border);border-radius:8px;padding:10px;max-height:180px;overflow:auto;margin-top:8px;white-space:pre-wrap;display:none;}
+/* Preview de las 3 etiquetas de empaque apiladas (2x4 cada una) */
+.emp-stack{display:flex;flex-direction:column;gap:6px;width:260px;}
+.emp-lbl{background:#fff;color:#000;border-radius:3px;font-family:Arial,sans-serif;padding:8px 10px;width:260px;height:120px;box-sizing:border-box;overflow:hidden;}
+/* Etiqueta 1: texto grande */
+.emp1{display:flex;flex-direction:column;justify-content:center;gap:2px;}
+.emp1 .l1{font-weight:800;font-size:22px;line-height:1;}
+.emp1 .l2{font-weight:800;font-size:18px;line-height:1;}
+.emp1 .l3{font-weight:800;font-size:18px;line-height:1;}
+/* Etiqueta 2: códigos de barras */
+.emp2{display:flex;flex-direction:column;justify-content:space-between;position:relative;}
+.emp2 .top{display:flex;align-items:center;gap:6px;}
+.emp2 .top b{font-size:12px;font-weight:900;}
+.emp2 .top span{font-size:7px;}
+.emp2 .fch{font-size:8px;font-weight:700;}
+.emp2 .rowb{display:flex;align-items:center;gap:6px;}
+.emp2 .rowb .k{font-size:7px;font-weight:700;width:70px;}
+.emp2 .barcode{height:16px;flex:1;background:repeating-linear-gradient(90deg,#000 0,#000 1.5px,#fff 1.5px,#fff 3px);}
+.emp2 .barnum{font-size:6px;text-align:center;}
+.emp2 .cliente{position:absolute;right:8px;top:34px;font-size:9px;font-weight:800;}
+/* Etiqueta 3: NP + piezas + RUBIO */
+.emp3{display:flex;flex-direction:column;justify-content:center;gap:3px;position:relative;}
+.emp3 .np{font-weight:800;font-size:24px;line-height:1;}
+.emp3 .pz{font-weight:800;font-size:18px;line-height:1;}
+.emp3 .rb{position:absolute;right:8px;bottom:8px;font-weight:800;font-size:14px;}
 </style>
 </head>
 <body>
-<div class="header"><h1>ETIQUETAS DE TARIMA</h1><span>ZEBRA BROWSER PRINT</span></div>
+<div class="header">
+  <div class="header-icon"><img src="logo.png" alt="RUBIO"></div>
+  <div class="header-text">
+    <h1>IMPRIMIR ETIQUETAS</h1>
+    <span>ZEBRA BROWSER PRINT</span>
+  </div>
+</div>
+
 <div class="container">
+  <!-- Estado impresora -->
   <div class="printer-status">
-    <div class="left"><div class="status-dot searching" id="statusDot"></div>
-      <div><div id="statusLabel" style="font-size:13px;font-weight:600;">Buscando impresora...</div>
-      <div id="printerName" style="font-size:11px;color:var(--text-dim);font-family:monospace;">—</div></div></div>
+    <div class="left">
+      <div class="status-dot searching" id="statusDot"></div>
+      <div>
+        <div class="status-label" id="statusLabel">Buscando impresora...</div>
+        <div class="printer-name" id="printerName">—</div>
+      </div>
+    </div>
     <button class="btn-retry" onclick="conectar()">Reintentar</button>
   </div>
+
+  <!-- Mapeo impresora por tamaño -->
   <div class="printer-map">
-    <h3>IMPRESORA PARA ETIQUETA DE TARIMA</h3>
-    <div class="map-row"><label>Etiqueta</label><select id="printer_tarima"></select></div>
-    <div class="map-actions"><button onclick="guardarConfig()">Guardar</button><button onclick="conectar()">Actualizar</button></div>
+    <h3>IMPRESORA POR TAMAÑO</h3>
+    <div class="map-row"><label>4 x 6 in</label><select id="printer_4x6"></select></div>
+    <div class="map-row"><label>2 x 4 in</label><select id="printer_2x4"></select></div>
+    <div class="map-row"><label>1.25 x 1 in</label><select id="printer_125x1"></select></div>
+    <div class="map-row"><label>Paso 1.25x1 (dots)</label><input type="number" id="paso_125x1" min="240" max="300" step="1" onchange="guardarPaso()" title="Distancia entre una etiqueta chica y la siguiente. Si la 2a y 3a quedan más a la izquierda que la 1a, súbelo; si quedan más a la derecha, bájalo." style="width:90px"></div>
+    <div class="map-row"><label>Margen izq. 1.25x1 (dots)</label><input type="number" id="margen_125x1" min="0" max="60" step="1" onchange="guardarMargen()" title="Recorre las 3 columnas juntas. Si todas se cortan a la izquierda, súbelo; si sobra espacio a la izquierda, bájalo." style="width:90px"></div>
+    <div class="map-actions">
+      <button onclick="guardarConfig()">Guardar</button>
+      <button onclick="conectar()">Actualizar lista</button>
+    </div>
   </div>
-  <div class="section-title">▸ ETIQUETA A IMPRIMIR</div>
+
+  <!-- Resumen -->
+  <div class="summary-banner" id="summaryBanner"></div>
+
+  <!-- Reacomodo manual -->
+  <div class="reacomodo">
+    <h3>REACOMODO DE PIEZAS EN PAQUETES</h3>
+    <div class="desc">Opcional. Define cómo repartir las piezas. Si lo dejas vacío, se usa el reparto automático.</div>
+    <div id="reaRows"></div>
+    <button class="rea-add" onclick="agregarFilaRea()">+ Agregar fila</button>
+    <div class="rea-check neutral" id="reaCheck">Reparto automático activo.</div>
+  </div>
+
+  <!-- Etiquetas -->
+  <div class="section-title">▸ ETIQUETAS A IMPRIMIR</div>
   <div id="labelsList"></div>
-  <button class="print-btn disabled" id="printBtn" onclick="imprimir()" disabled>BUSCANDO IMPRESORA...</button>
-  <button class="print-btn" id="pdfBtn" style="margin-top:10px;background:var(--surface2);border:1px solid var(--border);color:var(--text);" onclick="abrirPDF()">📄 ABRIR HOJA PDF DE LA TARIMA</button>
+
+  <!-- Copias -->
+  <div class="copies-control">
+    <label>COPIAS POR JUEGO:</label>
+    <input type="number" id="copies" value="1" min="1" max="50">
+  </div>
+
+  <button class="print-btn disabled" id="printBtn" onclick="imprimirTodo()" disabled>BUSCANDO IMPRESORA...</button>
+  <div class="hint">O usa el botón individual en cada etiqueta</div>
+
   <div id="messageArea"></div>
-  <div id="debug"></div>
+
+  <div class="debug-panel">
+    <button class="debug-toggle" onclick="toggleDebug()">▸ Diagnóstico</button>
+    <div class="debug-content" id="debugContent"></div>
+  </div>
 </div>
+
 <script>
-const P=new URLSearchParams(window.location.search);
-const datos={
-  tarima:P.get('tarima')||'',        // valor del campo Tarima (ej. "Packing Delaware" o "Tarima 5")
-  numTarima:P.get('nt')||'',         // número de tarima
-  folio:P.get('folio')||'',          // folio de tarima
-  ocs:P.get('ocs')||'',              // OCs (sin línea) separadas por coma
-  nps:P.get('nps')||'',              // NPs separados por coma
-  pdf:P.get('pdf')||'',              // URL de la hoja PDF (hoja_tarima)
+const P = new URLSearchParams(window.location.search);
+const datos = {
+  oc:P.get('oc')||'', linea:P.get('linea')||'', ocLinea:P.get('ocl')||'',
+  np:P.get('np')||'', totalPzas:parseInt(P.get('total')||'0',10),
+  numPaq:parseInt(P.get('paq')||'1',10), fecha:P.get('fecha')||'',
+  cliente:P.get('cliente')||'', sede:P.get('sede')||'', tam:P.get('tam')||'2x4',
+  desc:P.get('desc')||'', rev:P.get('rev')||'',
 };
 const BP_BASE="https://localhost:9101";
 let allDevices=[];
-function debugLog(m){const el=document.getElementById('debug');el.textContent+=`[${new Date().toLocaleTimeString()}] ${m}\n`;el.scrollTop=el.scrollHeight;}
+const LOGO_BASE = "";  // misma carpeta que el HTML
+// nombre de archivo del cliente: minúsculas, espacios -> guion bajo
+function clienteArchivo(cli){
+  if(!cli) return "";
+  return cli.trim().toLowerCase().replace(/\s+/g,'_') + '.png';
+}
+// Cache de ^GF por nombre de archivo
+const gfCache = {};
+// Convertir una imagen (por URL) a comando ^GF de ZPL (monocromo)
+function imagenAGF(url, maxW){
+  return new Promise((resolve)=>{
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = function(){
+      try{
+        let w = img.width, h = img.height;
+        if(maxW && w > maxW){ h = Math.round(h * maxW / w); w = maxW; }
+        // ancho en bytes (múltiplo de 8 bits)
+        const wBytes = Math.ceil(w/8);
+        const wPix = wBytes*8;
+        const cv = document.createElement('canvas');
+        cv.width = wPix; cv.height = h;
+        const ctx = cv.getContext('2d');
+        ctx.fillStyle = "#fff"; ctx.fillRect(0,0,wPix,h);
+        ctx.drawImage(img,0,0,w,h);
+        const data = ctx.getImageData(0,0,wPix,h).data;
+        let hex = "";
+        for(let y=0;y<h;y++){
+          for(let b=0;b<wBytes;b++){
+            let byte=0;
+            for(let bit=0;bit<8;bit++){
+              const x=b*8+bit;
+              const idx=(y*wPix+x)*4;
+              const r=data[idx],g=data[idx+1],bl=data[idx+2],a=data[idx+3];
+              // pixel oscuro (y opaco) = 1 (negro en ZPL)
+              const lum=(r+g+bl)/3;
+              const negro=(a>128 && lum<128)?1:0;
+              byte=(byte<<1)|negro;
+            }
+            hex += byte.toString(16).padStart(2,'0').toUpperCase();
+          }
+        }
+        const total=wBytes*h;
+        const gf=`^GFA,${total},${total},${wBytes},${hex}`;
+        resolve({gf:gf, wBytes:wBytes, h:h});
+      }catch(e){ resolve(null); }
+    };
+    img.onerror = function(){ resolve(null); };
+    img.src = url;
+  });
+}
+async function precargarLogo(nombre, maxW, cacheKey){
+  const key = cacheKey || nombre;
+  if(!nombre) return null;
+  if(gfCache[key]) return gfCache[key];
+  const r = await imagenAGF(LOGO_BASE + nombre, maxW);
+  gfCache[key] = r;
+  return r;
+}
+
+function debugLog(m){const el=document.getElementById('debugContent');el.textContent+=`[${new Date().toLocaleTimeString()}] ${m}\n`;el.scrollTop=el.scrollHeight;}
+function toggleDebug(){const d=document.getElementById('debugContent');d.style.display=d.style.display==='none'?'block':'none';}
 function showMessage(m,t){document.getElementById('messageArea').innerHTML=`<div class="msg ${t}">${m}</div>`;}
 
-// ¿Es packing? El campo Tarima empieza con "Packing"
-const esPacking = datos.tarima.toLowerCase().startsWith('packing');
-// Nombre del packing (lo que sigue de "Packing ")
-function nombrePacking(){
-  const t = datos.tarima.trim();
-  const p = t.replace(/^packing\s*/i,'').toUpperCase();
-  return p;
+// Reparto de piezas
+function repartoPaquetes(total,num){const p=[];if(num<=0)return p;const base=Math.floor(total/num);const resto=total-base*num;for(let i=0;i<num;i++)p.push(i===num-1?base+resto:base);return p;}
+let paquetes=repartoPaquetes(datos.totalPzas,datos.numPaq);
+// Etiqueta individual 1.25x1: solo VERTIV + sede Reynosa. Una por cada pieza.
+const aplicaIndividual = (datos.cliente.toUpperCase()==="VERTIV" && datos.sede.toLowerCase()==="reynosa");
+const esEmerson = (datos.cliente.toUpperCase()==="EMERSON APPLETON");
+const esOrto = (datos.cliente.toUpperCase()==="ORTO");
+const esAbb = (datos.cliente.toUpperCase()==="ABB");
+const etiquetasPorJuego = (esEmerson || esOrto) ? 1 : 3;
+// Para ABB: separar OC y línea desde ocLinea tipo "102930L160"
+function abbOcLinea(){
+  const raw = datos.ocLinea || "";
+  const pos = raw.indexOf("L");
+  let oc = raw, lin = "";
+  if(pos > 0){ oc = raw.substring(0,pos); lin = raw.substring(pos+1); }
+  // línea a 5 dígitos con ceros a la izquierda
+  const linPad = ("00000" + lin.replace(/\D/g,'')).slice(-5);
+  return {oc:oc, lin:linPad};
 }
-// Solo el número del folio: "TarimaMersa-0841" -> "0841"
-const folioNum = (datos.folio.split('-').pop() || datos.folio).trim();
-const ocsArr = datos.ocs ? datos.ocs.split(',').filter(x=>x) : [];
-const npsArr = datos.nps ? datos.nps.split(',').filter(x=>x) : [];
+// Arma el dato del código: (P)OC(L)Linea(Q)Cantidad(4díg)
+function abbCodigo(cant){
+  const o = abbOcLinea();
+  const q = ("0000" + cant).slice(-4);
+  return "(P)" + o.oc + "(L)" + o.lin + "(Q)" + q;
+}
+const revFmt = datos.rev ? ("REV \u2013 " + datos.rev) : "";
+// Fecha con mes abreviado a 3 letras: "26/September/2026" -> "26/Sep/2026"
+function fechaMesCorto(f){
+  if(!f) return "";
+  const partes = f.split("/");
+  if(partes.length===3){ return partes[0] + "/" + partes[1].substring(0,3) + "/" + partes[2]; }
+  return f;
+}
+const fechaCorta = fechaMesCorto(datos.fecha);
+const tamNombre={'4x6':'4 × 6 in','2x4':'2 × 4 in','1.25x1':'1.25 × 1 in','125x1':'1.25 × 1 in'}[datos.tam]||'2 × 4 in';
 
-function renderLabel(){
-  let html='';
-  if(esPacking){
-    const ocLines = ocsArr.map(o=>`<div class="sm">P.O ${o}</div>`).join('');
-    const npLines = npsArr.map(n=>`<div class="big">${n}</div>`).join('');
-    html=`<div class="label-card">
-      <div class="label-card-head"><span class="ocl">PALLET ${nombrePacking()}</span><span class="npr">Tarima ${datos.numTarima}</span></div>
-      <div class="preview-wrap"><div class="lbl-black">
-        <div class="big">PALLET</div>
-        <div class="big">${nombrePacking()}</div>
-        <div class="huge">${datos.numTarima}</div>
-        ${ocLines}
-        ${npLines}
-      </div></div>
-      <div class="tam-label">Etiqueta PALLET (Packing)</div>
+
+// ═══ Reacomodo manual de piezas ═══
+function agregarFilaRea(cant, paq){
+  const cont = document.getElementById('reaRows');
+  const row = document.createElement('div');
+  row.className = 'rea-row';
+  row.innerHTML = `
+    <div class="grp"><label>Cantidad</label><input type="number" min="0" class="rea-cant" value="${cant||''}" oninput="validarReacomodo()"></div>
+    <div class="grp"><label>Paquetes</label><input type="number" min="0" class="rea-paq" value="${paq||''}" oninput="validarReacomodo()"></div>
+    <button class="del" onclick="this.parentElement.remove();validarReacomodo();">×</button>`;
+  cont.appendChild(row);
+}
+// Lee las filas; devuelve {paquetes:[...], valido:bool, vacio:bool, msg:string}
+function leerReacomodo(){
+  const cants = [...document.querySelectorAll('.rea-cant')];
+  const paqs  = [...document.querySelectorAll('.rea-paq')];
+  let sumaPzas=0, sumaPaq=0, algo=false;
+  const lista=[];
+  for(let i=0;i<cants.length;i++){
+    const cv=parseInt(cants[i].value), pv=parseInt(paqs[i].value);
+    const cOk=!isNaN(cv)&&cv>0, pOk=!isNaN(pv)&&pv>0;
+    if(cv||pv) algo=true;
+    if(cOk&&pOk){ sumaPzas+=cv*pv; sumaPaq+=pv; for(let k=0;k<pv;k++) lista.push(cv); }
+  }
+  if(!algo) return {vacio:true, valido:true, paquetes:null, msg:''};
+  const okP = sumaPzas===datos.totalPzas, okQ = sumaPaq===datos.numPaq;
+  let msg='';
+  if(okP&&okQ) msg=`✓ ${sumaPzas} pzas en ${sumaPaq} paquetes — coincide.`;
+  else msg=`✗ Suma ${sumaPzas} pzas / ${sumaPaq} paq. Debe ser ${datos.totalPzas} pzas / ${datos.numPaq} paq.`;
+  return {vacio:false, valido:(okP&&okQ), paquetes:lista, msg:msg};
+}
+function validarReacomodo(){
+  const r = leerReacomodo();
+  const el = document.getElementById('reaCheck');
+  if(r.vacio){ el.className='rea-check neutral'; el.textContent='Reparto automático activo.'; paquetes=repartoPaquetes(datos.totalPzas,datos.numPaq); }
+  else if(r.valido){ el.className='rea-check ok'; el.textContent=r.msg; paquetes=r.paquetes; }
+  else { el.className='rea-check bad'; el.textContent=r.msg; }
+  actualizarConteos();
+}
+function actualizarConteos(){
+  // refresca banner, tarjetas y botón según el reparto vigente
+  renderResumen();
+  renderLabels();
+  reAplicarPreviewIndividual();
+  const btn=document.getElementById('printBtn');
+  if(allDevices.length>0 && !btn.classList.contains('success')){
+    btn.textContent=`⬡ IMPRIMIR TODAS (${totalEtiquetasVigente()} ETIQUETAS)`;
+  }
+}
+function totalEtiquetasVigente(){
+  return paquetes.length*etiquetasPorJuego + (aplicaIndividual ? datos.totalPzas : 0);
+}
+
+// Banner resumen
+function renderResumen(){
+  const totalEtiquetas = paquetes.length*etiquetasPorJuego + (aplicaIndividual ? datos.totalPzas : 0);
+  document.getElementById('summaryBanner').innerHTML=
+    `<div><div class="np">${datos.np||'—'}</div><div class="meta">${datos.totalPzas} PZAS · ${datos.numPaq} PAQUETE(S) · ${datos.cliente} · ${datos.sede}${aplicaIndividual?` · +${datos.totalPzas} IND. 1.25x1`:''}</div></div>
+     <div class="badge">${totalEtiquetas}</div>`;
+}
+renderResumen();
+
+// Render de cada juego (una tarjeta por paquete)
+function preview(cant){
+  const lc = datos.cliente ? datos.cliente.toUpperCase() : '';
+  const rubio = h => `<img src="logo.png" style="height:${h}px;" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'RUBIO'}))">`;
+  const ocPrev = esEmerson ? datos.oc : (datos.oc + ' ' + datos.linea);
+  const cliImg = datos.cliente?`<img src="${clienteArchivo(datos.cliente)}" style="height:20px;" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'${lc}'}))">`:'';
+  // Etiqueta 2 (siempre)
+  const etq2 = `
+    <div class="emp-lbl emp2">
+      <div class="top">${rubio(16)}<b style="font-size:13px;">|</b><span style="font-size:8px;">MAQUINADOS ESPECIALES RUBIO S.A. DE C.V.</span></div>
+      ${esEmerson?'<div style="font-size:8px;font-weight:700;">"MATERIAL APROBADO"</div>':''}
+      <div class="fch">FECHA: ${datos.fecha}</div>
+      <div class="rowb"><div class="k">NUMERO DE PARTE</div><div class="barcode"></div></div>
+      <div class="rowb"><div class="k">CANTIDAD</div><div class="barcode" style="flex:0 0 90px;"></div></div>
+      <div class="rowb"><div class="k">ORDEN DE COMPRA</div><div class="barcode"></div></div>
+      <div style="text-align:center;margin-top:2px;">${cliImg}</div>
     </div>`;
-  } else {
-    html=`<div class="label-card">
-      <div class="label-card-head"><span class="ocl">TARIMA MERSA</span><span class="npr">Folio ${datos.folio}</span></div>
-      <div class="preview-wrap"><div class="lbl-black" style="width:240px;min-height:0;height:160px;justify-content:center;align-items:center;text-align:center;gap:2px;">
-        <div style="font-weight:900;font-size:30px;line-height:1;">TARIMA</div>
-        <div style="font-weight:900;font-size:30px;line-height:1;">MERSA</div>
-        <div style="font-weight:900;font-size:56px;line-height:1;">${folioNum}</div>
+  // Emerson: solo etiqueta 2
+  if(esEmerson){ return `<div class="emp-stack">${etq2}</div>`; }
+  // VERTIV: las tres
+  return `<div class="emp-stack">
+    <div class="emp-lbl emp1" style="align-items:center;justify-content:center;position:relative;">
+      <div style="text-align:center;">
+        <div class="l1" style="font-size:26px;">${datos.np}</div>
+        <div class="l2" style="font-size:20px;">${cant} PIEZAS</div>
+      </div>
+      <div style="position:absolute;right:6px;bottom:5px;">${rubio(22)}</div>
+    </div>
+    ${etq2}
+    <div class="emp-lbl emp3" style="position:relative;">
+      <div class="np" style="font-size:26px;">${datos.np}</div>
+      <div class="pz" style="font-size:18px;">${cant} PIEZAS</div>
+      <div style="font-size:14px;font-weight:800;">${ocPrev}</div>
+      <div style="position:absolute;right:6px;bottom:5px;">${rubio(20)}</div>
+    </div>
+  </div>`;
+}
+// Agrupa paquetes CONSECUTIVOS con la misma cantidad -> [{cant, desde, hasta, count}]
+function agruparPaquetes(){
+  const grupos=[];
+  for(let i=0;i<paquetes.length;i++){
+    const cant=paquetes[i];
+    if(grupos.length>0 && grupos[grupos.length-1].cant===cant){
+      const g=grupos[grupos.length-1]; g.hasta=i+1; g.count++;
+    } else {
+      grupos.push({cant:cant, desde:i+1, hasta:i+1, count:1});
+    }
+  }
+  return grupos;
+}
+function renderLabels(){
+  // ── Caso ABB: 4 etiquetas ──
+  if(esAbb){
+    const rubio = h => `<img src="logo.png" style="height:${h}px;" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'RUBIO'}))">`;
+    const o = abbOcLinea();
+    const linNum = parseInt(o.lin,10).toString();
+    const cantEj = paquetes[0] || 1;
+    let html = `<div class="label-card">
+      <div class="label-card-head"><span class="ocl">${o.oc} · L${linNum}</span><span class="npr">Grande 4×6 · 1 por paquete</span></div>
+      <div class="preview-wrap"><div style="width:150px;height:220px;background:#fff;color:#000;border-radius:4px;padding:8px;font-family:Arial;display:flex;flex-direction:column;justify-content:space-between;">
+        <div style="display:flex;gap:6px;align-items:center;">${rubio(14)}<span style="font-size:6px;">MAQUINADOS ESPECIALES RUBIO S.A. DE C.V.</span></div>
+        <div style="height:60px;background:repeating-linear-gradient(90deg,#000 0,#000 1.5px,#fff 1.5px,#fff 3px);"></div>
+        <div style="font-size:6px;text-align:center;">(P)${o.oc}(L)${o.lin}(Q)${('0000'+cantEj).slice(-4)}</div>
+        <div style="font-size:5px;text-align:center;">LAGO ISEO #252 COL. ANAHUAC C.P. 11320 MEX. CDMX.</div>
       </div></div>
-      <div class="tam-label">Etiqueta TARIMA MERSA + Folio · 6 × 4 in horizontal (no packing)</div>
+      <div class="tam-label">4 × 6 in · código (P)(L)(Q) · 1 por paquete</div>
+    </div>
+    <div class="label-card">
+      <div class="label-card-head"><span class="ocl">Amarilla</span><span class="npr">2×4 · 1 por paquete</span></div>
+      <div class="preview-wrap"><div style="width:200px;height:100px;background:#ffe600;color:#000;border-radius:4px;padding:8px;font-family:Arial;display:flex;flex-direction:column;justify-content:center;gap:3px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">${rubio(14)}<span style="font-weight:800;font-size:14px;">${cantEj} PIEZAS</span></div>
+        <div style="font-weight:800;font-size:14px;">${datos.np}</div>
+        <div style="font-size:12px;">O.C ${o.oc}</div>
+      </div></div>
+      <div class="tam-label">2 × 4 in · 1 por paquete</div>
+    </div>
+    <div class="label-card">
+      <div class="label-card-head"><span class="ocl">Chica LINEA + Chica NP</span><span class="npr">1.25×1 · una por pieza c/u</span></div>
+      <div class="preview-wrap"><div style="display:flex;gap:6px;">
+        <div style="width:80px;height:64px;background:#fff;color:#000;border-radius:3px;padding:6px;font-family:Arial;display:flex;flex-direction:column;justify-content:center;">
+          <div style="font-size:9px;font-weight:700;">LINEA</div><div style="font-size:16px;font-weight:800;">${linNum}</div>
+        </div>
+        <div style="width:80px;height:64px;background:#fff;color:#000;border-radius:3px;padding:6px;font-family:Arial;display:flex;flex-direction:column;justify-content:center;gap:2px;">
+          <div style="font-size:9px;font-weight:800;">${datos.np}</div><div style="font-size:10px;font-weight:700;">1 PIEZA</div>
+        </div>
+      </div></div>
+      <div class="tam-label">1.25 × 1 in · LINEA y NP, una por cada pieza (${datos.totalPzas} c/u)</div>
+    </div>`;
+    document.getElementById('labelsList').innerHTML=html;
+    return;
+  }
+  // ── Caso ORTO: 1 mediana de texto + chicas por paquete ──
+  if(esOrto){
+    const rubio = h => `<img src="logo.png" style="height:${h}px;" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'RUBIO'}))">`;
+    const lc = datos.cliente.toUpperCase();
+    const cliImg = `<img src="${clienteArchivo(datos.cliente)}" style="height:24px;" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'${lc}'}))">`;
+    let html = `<div class="label-card">
+      <div class="label-card-head"><span class="ocl">${datos.oc}</span><span class="npr">Etiqueta mediana (total)</span></div>
+      <div class="preview-wrap">
+        <div class="emp-lbl emp2" style="height:auto;min-height:130px;">
+          <div class="top">${rubio(16)}<b style="font-size:13px;">|</b><span style="font-size:8px;">MAQUINADOS ESPECIALES RUBIO S.A. DE C.V.</span></div>
+          <div style="font-size:8px;font-weight:700;">"MATERIAL APROBADO"</div>
+          <div class="fch">FECHA: ${datos.fecha}</div>
+          <div style="font-size:8px;"><b>NUMERO DE PARTE:</b> ${datos.np}</div>
+          <div style="font-size:8px;"><b>DESCRIPCION:</b> ${datos.desc}</div>
+          <div style="font-size:8px;"><b>CANTIDAD:</b> ${datos.totalPzas}</div>
+          <div style="font-size:8px;"><b>ORDEN DE COMPRA:</b> ${datos.oc}</div>
+          <div style="text-align:right;">${cliImg}</div>
+        </div>
+      </div>
+      <div class="tam-label">2 × 4 in · solo texto · 1 etiqueta (total de la orden)</div>
+    </div>
+    <div class="label-card">
+      <div class="label-card-head"><span class="ocl">Etiquetas chicas</span><span class="npr">${paquetes.length} etiqueta(s), 1 por paquete</span></div>
+      <div class="preview-wrap"><div style="display:flex;gap:6px;">
+        ${paquetes.slice(0,3).map(q=>`
+          <div style="width:80px;height:64px;background:#fff;color:#000;border-radius:3px;padding:4px 5px;font-family:Arial,sans-serif;display:flex;flex-direction:column;justify-content:center;gap:1px;position:relative;">
+            <div style="font-weight:800;font-size:9px;">${datos.np}</div>
+            <div style="font-size:6px;">${revFmt}</div>
+            <div style="font-size:6px;font-weight:600;">${datos.desc}</div>
+            <div style="font-size:6px;">${q} PZAS</div>
+            <div style="font-size:5px;">${fechaCorta}</div>
+            <div style="position:absolute;right:3px;bottom:3px;">${rubio(8)}</div>
+          </div>`).join('')}
+      </div></div>
+      <div class="tam-label">1.25 × 1 in · 3 por línea · una por paquete (con su cantidad)</div>
+    </div>`;
+    document.getElementById('labelsList').innerHTML=html;
+    return;
+  }
+  const grupos = agruparPaquetes();
+  const totalPaq = paquetes.length;
+  let html='';
+  for(let gi=0; gi<grupos.length; gi++){
+    const g = grupos[gi];
+    const cant = g.cant;
+    // Título del rango
+    let titulo;
+    if(g.count===1) titulo = `Paquete ${g.desde} de ${totalPaq}`;
+    else titulo = `Paquetes ${g.desde} al ${g.hasta} de ${totalPaq}`;
+    const copiasTxt = g.count===1 ? '1 juego' : `${g.count} juegos`;
+    html+=`<div class="label-card">
+      <div class="label-card-head"><span class="ocl">${datos.ocLinea}</span><span class="npr">${titulo}</span></div>
+      <div class="preview-wrap">${preview(cant)}</div>
+      <div class="tam-label">${tamNombre} · ${esEmerson?'1 etiqueta':'juego de 3 etiquetas'} · ${copiasTxt}</div>
+      <div class="fields">
+        <div class="field"><div class="k">Número de Parte</div><div class="v">${datos.np}</div></div>
+        <div class="field"><div class="k">Cantidad paquete</div><div class="v">${cant} pzas</div></div>
+        <div class="field"><div class="k">Juegos a imprimir</div><div class="v">${g.count}</div></div>
+        <div class="field"><div class="k">Línea</div><div class="v">${datos.linea}</div></div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn-print-single" style="flex:1;" id="btnGrupo1_${gi}" onclick="imprimirGrupo(${gi},true)">🖨️ IMPRIMIR 1 JUEGO</button>
+        <button class="btn-print-single" style="flex:1;" id="btnGrupo${gi}" onclick="imprimirGrupo(${gi},false)">🖨️ IMPRIMIR ${copiasTxt.toUpperCase()}</button>
+      </div>
     </div>`;
   }
   document.getElementById('labelsList').innerHTML=html;
 }
-renderLabel();
+renderLabels();
 
+// Preview de la etiqueta individual 1.25x1 (solo VERTIV + Reynosa)
+function reAplicarPreviewIndividual(){
+  const prev = document.getElementById('indPreviewCard');
+  if(prev) prev.remove();
+  if(!aplicaIndividual) return;
+  const rubioImg = `<img src="logo.png" style="height:10px;" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'RUBIO'}))">`;
+  const card = document.createElement('div');
+  card.className = 'label-card';
+  card.id = 'indPreviewCard';
+  card.innerHTML = `
+    <div class="label-card-head"><span class="ocl">Etiqueta individual</span><span class="npr">${datos.totalPzas} etiquetas (1 por pieza)</span></div>
+    <div class="preview-wrap">
+      <div style="display:flex;gap:6px;">
+        ${[0,1,2].map(()=>`
+          <div style="width:80px;height:64px;background:#fff;color:#000;border-radius:3px;padding:4px 5px;font-family:Arial,sans-serif;display:flex;flex-direction:column;justify-content:center;gap:1px;position:relative;">
+            <div style="font-weight:800;font-size:9px;">${datos.np}</div>
+            <div style="font-size:6px;">${revFmt}</div>
+            <div style="font-size:6px;font-weight:600;">${datos.desc}</div>
+            <div style="font-size:6px;">1 PIEZA</div>
+            <div style="font-size:6px;">${fechaCorta}</div>
+            <div style="position:absolute;right:3px;bottom:3px;">${rubioImg}</div>
+          </div>`).join('')}
+      </div>
+    </div>
+    <div class="tam-label">1.25 × 1 in · 3 por línea · una por cada pieza</div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn-print-single" style="flex:1;" id="btnIndividual1" onclick="imprimirIndividuales(true)">🖨️ IMPRIMIR 1 ETIQUETA</button>
+      <button class="btn-print-single" style="flex:1;" id="btnIndividual" onclick="imprimirIndividuales(false)">🖨️ IMPRIMIR TODAS (${datos.totalPzas})</button>
+    </div>
+  `;
+  document.getElementById('labelsList').appendChild(card);
+}
+reAplicarPreviewIndividual();
+
+// ═══ Browser Print ═══
 async function conectar(){
-  const dot=document.getElementById('statusDot'),label=document.getElementById('statusLabel'),name=document.getElementById('printerName'),btn=document.getElementById('printBtn');
-  dot.className='status-dot searching';label.textContent='Buscando impresora...';allDevices=[];
+  const dot=document.getElementById('statusDot'), label=document.getElementById('statusLabel'), name=document.getElementById('printerName'), btn=document.getElementById('printBtn');
+  dot.className='status-dot searching'; label.textContent='Buscando impresora...'; debugLog('Conectando a '+BP_BASE);
+  allDevices=[];
   try{
     let defaultDevice=null;
-    try{const r=await fetch(BP_BASE+'/default?type=printer');if(r.ok)defaultDevice=await r.json();}catch(e){}
+    try{const r=await fetch(BP_BASE+'/default?type=printer');if(r.ok)defaultDevice=await r.json();}catch(e){debugLog('default: '+e.message);}
     let list=[];
-    try{const r=await fetch(BP_BASE+'/available?type=printer');if(r.ok){const ld=await r.json();list=Array.isArray(ld)?ld:(ld.printer||ld.devices||[]);}}catch(e){}
+    try{const r=await fetch(BP_BASE+'/available?type=printer');if(r.ok){const ld=await r.json();list=Array.isArray(ld)?ld:(ld.printer||ld.devices||[]);}}catch(e){debugLog('available: '+e.message);}
     if(defaultDevice&&(defaultDevice.name||defaultDevice.uid)&&list.length===0)list=[defaultDevice];
     allDevices=list;
     if(allDevices.length===0){
-      dot.className='status-dot error';label.textContent='Sin impresoras';
+      dot.className='status-dot error'; label.textContent='Sin impresoras';
       name.innerHTML='Abre Browser Print y acepta el certificado en <a href="https://localhost:9101/ssl_support" target="_blank" style="color:var(--amber)">localhost:9101/ssl_support</a>';
-      btn.className='print-btn disabled';btn.disabled=true;btn.textContent='SIN IMPRESORA';return;
+      btn.className='print-btn disabled'; btn.disabled=true; btn.textContent='SIN IMPRESORA'; return;
     }
-    dot.className='status-dot connected';label.textContent='Impresora conectada';name.textContent=(allDevices[0].name||allDevices[0].uid);
-    llenarSelect();
-    btn.className='print-btn';btn.disabled=false;btn.textContent='⬡ IMPRIMIR ETIQUETA';
-  }catch(e){dot.className='status-dot error';label.textContent='Error de conexión';debugLog('Error: '+e.message);}
+    dot.className='status-dot connected'; label.textContent='Impresora conectada';
+    name.textContent=(allDevices[0].name||allDevices[0].uid);
+    debugLog('Impresoras: '+allDevices.map(d=>d.name||d.uid).join(', '));
+    llenarSelects();
+    btn.className='print-btn ready'; btn.disabled=false; btn.textContent=`⬡ IMPRIMIR TODAS (${paquetes.length*etiquetasPorJuego} ETIQUETAS)`;
+  }catch(e){
+    dot.className='status-dot error'; label.textContent='Error de conexión'; debugLog('Error: '+e.message);
+  }
 }
-function llenarSelect(){
-  const sel=document.getElementById('printer_tarima');const g=JSON.parse(localStorage.getItem('tarima_printer')||'{}');
-  sel.innerHTML='<option value="">— Seleccionar —</option>';
-  allDevices.forEach((d,i)=>{const o=document.createElement('option');o.value=d.uid||i;o.textContent=d.name||d.uid;sel.appendChild(o);});
-  if(g.printer_tarima)sel.value=g.printer_tarima;
+function llenarSelects(){
+  const ids=['printer_4x6','printer_2x4','printer_125x1'];
+  const g=JSON.parse(localStorage.getItem('empaque_printers')||'{}');
+  ids.forEach(id=>{
+    const sel=document.getElementById(id); sel.innerHTML='<option value="">— Seleccionar —</option>';
+    allDevices.forEach((d,i)=>{const o=document.createElement('option');o.value=d.uid||i;o.textContent=d.name||d.uid;sel.appendChild(o);});
+    if(g[id])sel.value=g[id];
+  });
 }
-function guardarConfig(){localStorage.setItem('tarima_printer',JSON.stringify({printer_tarima:document.getElementById('printer_tarima').value}));showMessage('Impresora guardada.','ok');}
-function deviceTarima(){const g=JSON.parse(localStorage.getItem('tarima_printer')||'{}');let d=allDevices.find(x=>(x.uid||'')===g.printer_tarima);if(!d&&allDevices.length>0)d=allDevices[0];return d||null;}
+function guardarConfig(){
+  const cfg={printer_4x6:document.getElementById('printer_4x6').value,printer_2x4:document.getElementById('printer_2x4').value,printer_125x1:document.getElementById('printer_125x1').value};
+  localStorage.setItem('empaque_printers',JSON.stringify(cfg));
+  showMessage('Configuración de impresoras guardada.','ok'); debugLog('Config: '+JSON.stringify(cfg));
+}
+function deviceParaTamano(tam){
+  const cfg=JSON.parse(localStorage.getItem('empaque_printers')||'{}');
+  let key='printer_2x4'; if(tam==='4x6')key='printer_4x6'; else if(tam==='1.25x1'||tam==='125x1')key='printer_125x1';
+  let dev=allDevices.find(d=>(d.uid||'')===cfg[key]);
+  if(!dev&&allDevices.length>0)dev=allDevices[0];
+  return dev||null;
+}
 
-// ZPL etiqueta PALLET (4x6 = 812x1218). Fondo negro con texto invertido.
-function zplPallet(){
-  let y=90;
-  let ocZpl='';
-  ocsArr.forEach(o=>{ ocZpl+=`^FO60,${y}^CF0,50,50^FR^FDP.O ${o}^FS\n`; y+=60; });
-  let npZpl='';
-  npsArr.forEach(n=>{ npZpl+=`^FO60,${y}^CF0,70,70^FR^FD${n}^FS\n`; y+=80; });
+// ═══ ZPL (2x4in @203dpi = 812 x 406) ═══
+// Helper: posición X,Y para logo en esquina inferior derecha (o donde se indique)
+function logoInfDer(gf, margenX, margenY){
+  if(!gf) return null;
+  const w = gf.wBytes*8;
+  const x = 812 - w - (margenX||10);
+  const y = 406 - gf.h - (margenY||10);
+  return {x:x, y:y, w:w, h:gf.h};
+}
+function logoCentradoAbajo(gf, margenY){
+  if(!gf) return null;
+  const w = gf.wBytes*8;
+  const x = Math.round((812 - w)/2);
+  const y = 406 - gf.h - (margenY||10);
+  return {x:x, y:y, w:w, h:gf.h};
+}
+
+// ── Helpers de tamaño adaptativo ──
+// Calcula alto de fuente para que 'texto' quepa en 'anchoDisp' (dots).
+// La fuente CF0 escalable es ~0.6 de ancho por alto. size ≈ anchoDisp / (len*0.6)
+function fuenteAdaptativa(texto, anchoDisp, maxSize, minSize){
+  const len = (texto||'').length || 1;
+  let size = Math.floor(anchoDisp / (len*0.60));
+  if(size > maxSize) size = maxSize;
+  if(size < minSize) size = minSize;
+  return size;
+}
+// Módulo (^BY) del Code128 según largo, para que no se corte.
+// Ancho aprox = (len*11 + 35) * modulo. Buscamos el mayor modulo que quepa en anchoDisp.
+function moduloBarras(dato, anchoDisp){
+  const len = (dato||'').length || 1;
+  const unidades = len*11 + 35;
+  let mod = Math.floor(anchoDisp / unidades);
+  if(mod < 2) mod = 2;
+  if(mod > 3) mod = 3;
+  return mod;
+}
+// Config común: velocidad y darkness para que no se jale la tinta
+const ZPL_CFG = "^PR3^MD10";  // PR3 = 3 ips (más lento), MD10 = darkness medio-alto
+
+function zplEtiqueta1(c){
+  const gfRubio = gfCache['logo.png'];
+  const pos = logoInfDer(gfRubio, 15, 15);
+  const rubioZpl = pos ? `^FO${pos.x},${pos.y}${gfRubio.gf}` : `^CF0,50,50\n^FO560,320^FDRUBIO^FS`;
+  const fNP = fuenteAdaptativa(datos.np, 760, 130, 45);
+  const txtPz = c + " PIEZAS";
+  const fPz = fuenteAdaptativa(txtPz, 760, 100, 40);
   return `^XA
 ^CI28
-^PR3^MD12
+${ZPL_CFG}
 ^PW812
-^LL1218
-^FO0,0^GB812,1218,1218,B^FS
-^CF0,90,90
-^FO60,60^FR^FDPALLET^FS
-^CF0,70,70
-^FO60,170^FR^FD${nombrePacking()}^FS
-^CF0,300,300
-^FO0,290^FB812,1,0,C,0^FR^FD${datos.numTarima}^FS
-${ocZpl}
-${npZpl}
-^XZ`;
-}
-// ZPL etiqueta TARIMA MERSA + folio (4x6). Fondo negro. Se lee en HORIZONTAL:
-// texto rotado 90° (^A0R). Visto de lado: arriba TARIMA, en medio MERSA, abajo el número.
-function zplTarimaMersa(){
+^LL406
+^CF0,${fNP},${fNP}
+^FO0,60^FB812,1,0,C,0^FD${datos.np}^FS
+^CF0,${fPz},${fPz}
+^FO0,220^FB812,1,0,C,0^FD${txtPz}^FS
+${rubioZpl}
+^XZ`;}
+
+function zplEtiqueta2(c){
+  const lc=datos.cliente?datos.cliente.toUpperCase():'';
+  // Logo RUBIO (más grande) en esquina superior izquierda
+  const gfRubio = gfCache['logo.png'];
+  const rubioZpl = gfRubio ? `^FO25,20${gfRubio.gf}` : `^CF0,40,40\n^FO25,25^FDRUBIO^FS`;
+  // separador "|" y razón social (más grande y separada), después del logo
+  const rubioW = gfRubio ? (gfRubio.wBytes*8) : 120;
+  const xSep = 25 + rubioW + 20;
+  const xRazon = xSep + 25;
+  // Logo VERTIV a la derecha de las barras (columna derecha)
+  const gfCli = datos.cliente ? gfCache[clienteArchivo(datos.cliente)] : null;
+  let cliZpl;
+  if(gfCli){
+    const wCli = gfCli.wBytes*8;
+    const xCli = 812 - wCli - 15;
+    const yCli = 205;  // a la altura de CANTIDAD (fila de en medio)
+    cliZpl = `^FO${xCli},${yCli}${gfCli.gf}`;
+  } else {
+    cliZpl = `^CF0,30,30\n^FO660,220^FD${lc}^FS`;
+  }
+  // Módulo adaptativo de barras (ancho disponible ~380 dots antes del logo cliente)
+  // Para Emerson, la OC va sin línea (solo datos.oc)
+  const ocParaBarras = esEmerson ? datos.oc : datos.ocLinea;
+  const modNP = moduloBarras(datos.np, 420);
+  const modCant = moduloBarras(c.toString(), 420);
+  const modOC = moduloBarras(ocParaBarras, 420);
+  // Leyenda "MATERIAL APROBADO" solo para Emerson (debajo de la razón social)
+  const leyenda = esEmerson ? `^CF0,26,26\n^FO${xRazon},72^FD"MATERIAL APROBADO"^FS` : '';
   return `^XA
 ^CI28
-^PR3^MD12
+${ZPL_CFG}
+^PW812
+^LL406
+${rubioZpl}
+^CF0,50,50
+^FO${xSep},30^FD|^FS
+^CF0,26,26
+^FO${xRazon},35^FB520,2,0,L,0^FDMAQUINADOS ESPECIALES RUBIO S.A. DE C.V.^FS
+${leyenda}
+^CF0,26,26
+^FO40,100^FDFECHA: ${datos.fecha}^FS
+^CF0,28,28
+^FO40,150^FDNUMERO DE PARTE^FS
+^CF0,30,30
+^BY${modNP},2,30
+^FO280,150^BCN,30,Y,N,N^FD${datos.np}^FS
+^CF0,28,28
+^FO40,235^FDCANTIDAD^FS
+^CF0,30,30
+^BY${modCant},2,30
+^FO280,232^BCN,30,Y,N,N^FD${c}^FS
+^CF0,28,28
+^FO40,320^FDORDEN DE COMPRA^FS
+^CF0,30,30
+^BY${modOC},2,30
+^FO280,318^BCN,30,Y,N,N^FD${ocParaBarras}^FS
+${cliZpl}
+^XZ`;}
+
+function zplEtiqueta3(c){
+  const gfRubio = gfCache['logo.png'];
+  const pos = logoInfDer(gfRubio, 15, 15);
+  const rubioZpl = pos ? `^FO${pos.x},${pos.y}${gfRubio.gf}` : `^CF0,50,50\n^FO560,320^FDRUBIO^FS`;
+  const fNP = fuenteAdaptativa(datos.np, 620, 110, 40);
+  const txtPz = c + " PIEZAS";
+  const fPz = fuenteAdaptativa(txtPz, 620, 90, 36);
+  const txtOC = datos.oc + " " + datos.linea;
+  const fOC = fuenteAdaptativa(txtOC, 620, 65, 28);
+  return `^XA
+^CI28
+${ZPL_CFG}
+^PW812
+^LL406
+^CF0,${fNP},${fNP}
+^FO40,40^FD${datos.np}^FS
+^CF0,${fPz},${fPz}
+^FO40,180^FD${txtPz}^FS
+^CF0,${fOC},${fOC}
+^FO40,300^FD${txtOC}^FS
+${rubioZpl}
+^XZ`;}
+
+
+// ═══ Etiquetas ABB ═══
+// 1. Grande 4x6 (812x1218 dots): RUBIO, razón social, código (P)(L)(Q), dirección
+function zplAbbGrande(cant){
+  const gfRubio = gfCache['logo.png'];
+  const rubioZpl = gfRubio ? `^FO40,40${gfRubio.gf}` : `^CF0,60,60\n^FO40,50^FDRUBIO^FS`;
+  const codigo = abbCodigo(cant);
+  return `^XA
+^CI28
+${ZPL_CFG}
 ^PW812
 ^LL1218
-^FO0,0^GB812,1218,1218,B^FS
-^FO602,0^A0R,170,170^FB1218,1,0,C,0^FR^FDTARIMA^FS
-^FO417,0^A0R,170,170^FB1218,1,0,C,0^FR^FDMERSA^FS
-^FO62,0^A0R,300,300^FB1218,1,0,C,0^FR^FD${folioNum}^FS
+${rubioZpl}
+^CF0,30,30
+^FO300,60^FB480,3,0,L,0^FDMAQUINADOS ESPECIALES RUBIO S.A. DE C.V.^FS
+^BY3,2,180
+^FO60,420^BCN,180,Y,N,N^FD${codigo}^FS
+^CF0,26,26
+^FO40,1120^FB740,2,0,C,0^FDLAGO ISEO #252 COL. ANAHUAC C.P. 11320 MEX. CDMX. E-MAIL mersa@prodigy.net.mx^FS
 ^XZ`;
 }
+// 2. Amarilla 2x4: RUBIO, cantidad del paquete, NP, OC
+function zplAbbAmarilla(cant){
+  const gfRubio = gfCache['logo.png'];
+  const rubioZpl = gfRubio ? `^FO30,25${gfRubio.gf}` : `^CF0,50,50\n^FO30,30^FDRUBIO^FS`;
+  const o = abbOcLinea();
+  return `^XA
+^CI28
+${ZPL_CFG}
+^PW812
+^LL406
+${rubioZpl}
+^CF0,60,60
+^FO440,40^FD${cant} PIEZA${cant>1?'S':''}^FS
+^CF0,60,60
+^FO40,180^FD${datos.np}^FS
+^CF0,55,55
+^FO40,290^FDO.C ${o.oc}^FS
+^XZ`;
+}
+// 3. Chica LINEA 1.25x1 (3 por línea): "LINEA" + número
+function bloqueAbbLinea(xOff){
+  const o = abbOcLinea();
+  const linNum = parseInt(o.lin,10).toString();
+  return `^CF0,40,40
+^FO${xOff+20},40^FDLINEA^FS
+^CF0,60,60
+^FO${xOff+20},95^FD${linNum}^FS`;
+}
+function zplAbbLineas(){
+  const total = datos.totalPzas;
+  const anchoCol = pasoCol();
+  let out=""; let i=0;
+  while(i<total){
+    let b=`^XA\n^CI28\n${ZPL_CFG}\n^PW812\n^LL203^LH${margenCol()},0\n`;
+    for(let col=0; col<3 && i<total; col++, i++){ b += bloqueAbbLinea(col*anchoCol)+"\n"; }
+    b+="^XZ\n"; out+=b;
+  }
+  return out;
+}
+// 4. Chica NP 1.25x1 (3 por línea): NP + "1 PIEZA", una por pieza
+function bloqueAbbNp(xOff){
+  const fNP = fuenteAdaptativa(datos.np, 230, 34, 16);
+  return `^CF0,${fNP},${fNP}
+^FO${xOff+20},45^FD${datos.np}^FS
+^CF0,34,34
+^FO${xOff+20},110^FD1 PIEZA^FS`;
+}
+function zplAbbNps(){
+  const total = datos.totalPzas;
+  const anchoCol = pasoCol();
+  let out=""; let i=0;
+  while(i<total){
+    let b=`^XA\n^CI28\n${ZPL_CFG}\n^PW812\n^LL203^LH${margenCol()},0\n`;
+    for(let col=0; col<3 && i<total; col++, i++){ b += bloqueAbbNp(col*anchoCol)+"\n"; }
+    b+="^XZ\n"; out+=b;
+  }
+  return out;
+}
+
+// ── Paso entre columnas del rollo 1.25x1 (3 por línea) ──
+// Calibrado con la GK420t y el rollo de 3 en línea: paso 266, margen izq. 25
+const MARGEN_DEFAULT = 25;
+function margenCol(){
+  const el=document.getElementById('margen_125x1');
+  const v=el?parseInt(el.value,10):NaN;
+  return (v>=0 && v<=60) ? v : MARGEN_DEFAULT;
+}
+function guardarMargen(){
+  try{ localStorage.setItem('empaque_margen_125x1', String(margenCol())); }catch(e){}
+}
+(function cargarMargen(){
+  let v=MARGEN_DEFAULT;
+  try{ const s=localStorage.getItem('empaque_margen_125x1'); const g=parseInt(s,10); if(s!==null && g>=0&&g<=60) v=g; }catch(e){}
+  const el=document.getElementById('margen_125x1'); if(el) el.value=v;
+})();
+const PASO_DEFAULT = 266;
+function pasoCol(){
+  const el=document.getElementById('paso_125x1');
+  const v=el?parseInt(el.value,10):NaN;
+  return (v>=240 && v<=300) ? v : PASO_DEFAULT;
+}
+function guardarPaso(){
+  try{ localStorage.setItem('empaque_paso_125x1_v2', String(pasoCol())); }catch(e){}
+}
+(function cargarPaso(){
+  let v=PASO_DEFAULT;
+  try{ const g=parseInt(localStorage.getItem('empaque_paso_125x1_v2'),10); if(g>=240&&g<=300) v=g; }catch(e){}
+  const el=document.getElementById('paso_125x1'); if(el) el.value=v;
+})();
+
+// ── Etiqueta individual 1.25x1 (3 columnas por línea) ──
+function bloqueIndividual(xOff, cantTxt){
+  const gfRubio = gfCache['logo_small'] || gfCache['logo.png'];
+  let rubioZpl = gfRubio ? `^FO${xOff+140},135${gfRubio.gf}` : `^CF0,18,18\n^FO${xOff+140},140^FDRUBIO^FS`;
+  const fNP = fuenteAdaptativa(datos.np, 230, 30, 14);
+  const cantMostrar = cantTxt || "1 PIEZA";
+  return `^CF0,${fNP},${fNP}
+^FO${xOff+15},12^FD${datos.np}^FS
+^CF0,20,20
+^FO${xOff+15},50^FD${revFmt}^FS
+^CF0,20,20
+^FO${xOff+15},80^FB230,1,0,L,0^FD${datos.desc}^FS
+^CF0,20,20
+^FO${xOff+15},112^FD${cantMostrar}^FS
+^CF0,20,20
+^FO${xOff+15},144^FD${fechaCorta}^FS
+${rubioZpl}`;
+}
+// Genera todas las etiquetas individuales, agrupando de 3 en 3 en un ^XA...^XZ
+function zplIndividuales(){
+  if(!aplicaIndividual) return "";
+  const total = datos.totalPzas;
+  const anchoCol = pasoCol();
+  let out = "";
+  let i = 0;
+  while(i < total){
+    let bloque = `^XA
+^CI28
+${ZPL_CFG}
+^PW812
+^LL203^LH${margenCol()},0
+`;
+    for(let col=0; col<3 && i<total; col++, i++){
+      bloque += bloqueIndividual(col*anchoCol, "1 PIEZA") + "\n";
+    }
+    bloque += "^XZ\n";
+    out += bloque;
+  }
+  return out;
+}
+// Chicas de ORTO: una por paquete, con la cantidad de ese paquete
+function zplIndividualesOrto(){
+  if(!esOrto) return "";
+  const anchoCol = pasoCol();
+  let out = "";
+  let i = 0;
+  while(i < paquetes.length){
+    let bloque = `^XA
+^CI28
+${ZPL_CFG}
+^PW812
+^LL203^LH${margenCol()},0
+`;
+    for(let col=0; col<3 && i<paquetes.length; col++, i++){
+      bloque += bloqueIndividual(col*anchoCol, paquetes[i] + " PZAS") + "\n";
+    }
+    bloque += "^XZ\n";
+    out += bloque;
+  }
+  return out;
+}
+
+function zplJuego(c){
+  if(esEmerson){ return zplEtiqueta2(c)+'\n'; }
+  return zplEtiqueta1(c)+'\n'+zplEtiqueta2(c)+'\n'+zplEtiqueta3(c)+'\n';
+}
+
+// Varios juegos ordenados POR TIPO: primero todas las de arriba (1),
+// luego todas las de en medio (2) y al final todas las de abajo (3).
+// cants = lista con la cantidad de cada juego a imprimir (repetida por copias).
+function zplPorTipo(cants){
+  if(esEmerson){ return cants.map(c=>zplEtiqueta2(c)+'\n').join(''); }
+  let z='';
+  cants.forEach(c=>{ z+=zplEtiqueta1(c)+'\n'; });
+  cants.forEach(c=>{ z+=zplEtiqueta2(c)+'\n'; });
+  cants.forEach(c=>{ z+=zplEtiqueta3(c)+'\n'; });
+  return z;
+}
+
 async function enviarZPL(device,zpl){
   const res=await fetch(BP_BASE+'/write',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({device:device,data:zpl})});
   if(!res.ok){throw new Error('Status '+res.status+': '+await res.text());}
 }
-async function imprimir(){
-  const device=deviceTarima();
-  if(!device){showMessage('No hay impresora asignada. Configúrala y guarda.','error');return;}
-  const btn=document.getElementById('printBtn');btn.className='print-btn disabled';btn.disabled=true;btn.textContent='ENVIANDO...';
+
+async function imprimirGrupo(gi, soloUno){
+  const rv = leerReacomodo();
+  if(!rv.vacio && !rv.valido){ showMessage('El reacomodo no cuadra: ' + rv.msg, 'error'); return; }
+  const device=deviceParaTamano(datos.tam);
+  if(!device){showMessage('No hay impresora para el tamaño '+datos.tam,'error');return;}
+  await precargarLogos();
+  const grupos = agruparPaquetes();
+  const g = grupos[gi];
+  if(!g) return;
+  const copiesExtra = parseInt(document.getElementById('copies').value)||1;
+  const btnId = soloUno ? ('btnGrupo1_'+gi) : ('btnGrupo'+gi);
+  const btn=document.getElementById(btnId); const orig=btn.textContent; btn.textContent='ENVIANDO...'; btn.disabled=true;
   try{
-    const zpl = esPacking ? zplPallet() : zplTarimaMersa();
-    await enviarZPL(device,zpl);
-    btn.className='print-btn success';btn.textContent='✓ ETIQUETA ENVIADA';
-    showMessage('Etiqueta enviada.','ok');
-  }catch(e){btn.className='print-btn';btn.disabled=false;btn.textContent='⬡ IMPRIMIR ETIQUETA';showMessage('Error: '+e.message,'error');debugLog('Error: '+e.message);}
+    // soloUno: 1 juego. Todos: N copias (una por paquete del grupo) × copias extra
+    const veces = soloUno ? 1 : (g.count*copiesExtra);
+    const cants=[]; for(let n=0; n<veces; n++) cants.push(g.cant);
+    const z = zplPorTipo(cants);
+    await enviarZPL(device,z);
+    btn.className='btn-print-single success'; btn.textContent='✓ ENVIADO';
+    debugLog('Grupo '+(gi+1)+' ('+veces+' juego(s) × '+g.cant+' pzas) a '+(device.name||device.uid));
+  }catch(e){btn.className='btn-print-single error'; btn.textContent='✗ ERROR'; debugLog('Error: '+e.message);}
+  setTimeout(()=>{btn.className='btn-print-single';btn.textContent=orig;btn.disabled=false;},3000);
 }
-function abrirPDF(){
-  if(datos.pdf){ window.open(datos.pdf, "_blank"); }
+
+// Imprimir etiquetas individuales 1.25x1 (soloUno = una etiqueta; false = todas)
+async function imprimirIndividuales(soloUno){
+  if(!aplicaIndividual) return;
+  const rv = leerReacomodo();
+  if(!rv.vacio && !rv.valido){ showMessage('El reacomodo no cuadra: ' + rv.msg, 'error'); return; }
+  const devInd=deviceParaTamano('1.25x1');
+  if(!devInd){showMessage('Falta asignar impresora 1.25x1 para las etiquetas individuales.','error');return;}
+  await precargarLogos();
+  const btnId = soloUno ? 'btnIndividual1' : 'btnIndividual';
+  const btn=document.getElementById(btnId); const orig=btn?btn.textContent:''; if(btn){btn.textContent='ENVIANDO...';btn.disabled=true;}
+  try{
+    let zplInd;
+    if(soloUno){
+      // Una sola etiqueta (un bloque en un ^XA)
+      zplInd = `^XA
+^CI28
+${ZPL_CFG}
+^PW812
+^LL203^LH${margenCol()},0
+` + bloqueIndividual(0) + `
+^XZ`;
+    } else {
+      zplInd = zplIndividuales();
+    }
+    await enviarZPL(devInd, zplInd);
+    if(btn){btn.className='btn-print-single success'; btn.textContent='✓ ENVIADO';}
+    debugLog('Individuales ('+(soloUno?'1':datos.totalPzas)+' pzas) a '+(devInd.name||devInd.uid));
+  }catch(e){ if(btn){btn.className='btn-print-single error'; btn.textContent='✗ ERROR';} debugLog('Error: '+e.message); }
+  setTimeout(()=>{ if(btn){btn.className='btn-print-single';btn.textContent=orig;btn.disabled=false;} },3000);
 }
-// Ocultar el botón PDF si no vino la URL
-if(!datos.pdf){ const b=document.getElementById('pdfBtn'); if(b) b.style.display='none'; }
+
+async function imprimirTodo(){
+  const rv = leerReacomodo();
+  if(!rv.vacio && !rv.valido){ showMessage('El reacomodo no cuadra: ' + rv.msg, 'error'); return; }
+  await precargarLogos();
+  const copies=parseInt(document.getElementById('copies').value)||1;
+  const btn=document.getElementById('printBtn'); btn.className='print-btn disabled'; btn.disabled=true;
+
+  // ── Caso ORTO: 1 mediana (total) + chicas por paquete ──
+  if(esOrto){
+    const devMed = deviceParaTamano('2x4');
+    if(!devMed){ showMessage('No hay impresora 2x4 para la etiqueta mediana de ORTO.','error'); btn.disabled=false; return; }
+    btn.textContent='ENVIANDO...';
+    try{
+      // Mediana: una vez (× copias)
+      let med=''; for(let k=0;k<copies;k++) med+=zplMedianaOrto()+'\n';
+      await enviarZPL(devMed, med);
+      // Chicas: una por paquete, a la impresora 1.25x1
+      const devInd = deviceParaTamano('1.25x1');
+      const zplInd = zplIndividualesOrto();
+      if(devInd && zplInd){
+        await enviarZPL(devInd, zplInd);
+      } else if(!devInd){
+        showMessage('Faltó asignar impresora 1.25x1 para las etiquetas chicas de ORTO.','error');
+      }
+      btn.className='print-btn success'; btn.textContent='✓ ETIQUETAS ENVIADAS';
+      showMessage('ORTO: 1 mediana + '+paquetes.length+' chicas enviadas.','ok');
+    }catch(e){btn.className='print-btn ready'; btn.disabled=false; btn.textContent='⬡ IMPRIMIR TODAS'; showMessage('Error: '+e.message,'error'); debugLog('Error: '+e.message);}
+    return;
+  }
+
+  // ── Caso ABB: grande(4x6) + amarilla(2x4) por paquete; LINEA y NP (1.25x1) por pieza ──
+  if(esAbb){
+    const dev4x6 = deviceParaTamano('4x6');
+    const dev2x4 = deviceParaTamano('2x4');
+    const dev125 = deviceParaTamano('1.25x1');
+    btn.textContent='ENVIANDO...';
+    try{
+      // Grande 4x6: una por paquete
+      if(dev4x6){
+        let g=''; for(let i=0;i<paquetes.length;i++){ for(let k=0;k<copies;k++) g+=zplAbbGrande(paquetes[i])+'\n'; }
+        await enviarZPL(dev4x6, g);
+      } else { showMessage('Falta impresora 4x6 para la etiqueta grande de ABB.','error'); }
+      // Amarilla 2x4: una por paquete
+      if(dev2x4){
+        let a=''; for(let i=0;i<paquetes.length;i++){ for(let k=0;k<copies;k++) a+=zplAbbAmarilla(paquetes[i])+'\n'; }
+        await enviarZPL(dev2x4, a);
+      } else { showMessage('Falta impresora 2x4 para la etiqueta amarilla de ABB.','error'); }
+      // Chicas LINEA y NP: una por pieza, a la 1.25x1
+      if(dev125){
+        await enviarZPL(dev125, zplAbbLineas());
+        await enviarZPL(dev125, zplAbbNps());
+      } else { showMessage('Falta impresora 1.25x1 para las etiquetas chicas de ABB.','error'); }
+      btn.className='print-btn success'; btn.textContent='✓ ETIQUETAS ENVIADAS';
+      showMessage('ABB: grande + amarilla por paquete, y chicas LINEA/NP por pieza enviadas.','ok');
+    }catch(e){btn.className='print-btn ready'; btn.disabled=false; btn.textContent='⬡ IMPRIMIR TODAS'; showMessage('Error: '+e.message,'error'); debugLog('Error: '+e.message);}
+    return;
+  }
+
+  const device=deviceParaTamano(datos.tam);
+  btn.textContent=`ENVIANDO ${total} ETIQUETAS...`;
+  debugLog('Imprimiendo todo: '+total+' etiquetas en '+(device.name||device.uid));
+  try{
+    const cants=[];
+    for(let i=0;i<paquetes.length;i++){for(let k=0;k<copies;k++)cants.push(paquetes[i]);}
+    const full = zplPorTipo(cants);
+    await enviarZPL(device,full);
+    // Etiquetas individuales 1.25x1 (VERTIV + Reynosa) a su propia impresora
+    if(aplicaIndividual){
+      const devInd = deviceParaTamano('1.25x1');
+      const zplInd = zplIndividuales();
+      if(devInd && zplInd){
+        debugLog('Enviando etiquetas individuales 1.25x1 ('+datos.totalPzas+' pzas) a '+(devInd.name||devInd.uid));
+        await enviarZPL(devInd, zplInd);
+      } else if(!devInd){
+        showMessage('Faltó asignar impresora 1.25x1 para las etiquetas individuales.','error');
+      }
+    }
+    btn.className='print-btn success'; btn.textContent=`✓ ${total} ETIQUETAS ENVIADAS`;
+    showMessage('Enviadas '+total+' etiquetas ('+paquetes.length+' juegos).','ok');
+    debugLog('Completado');
+  }catch(e){btn.className='print-btn ready'; btn.disabled=false; btn.textContent='⬡ IMPRIMIR TODAS'; showMessage('Error: '+e.message,'error'); debugLog('Error: '+e.message);}
+}
+
+async function precargarLogos(){
+  await precargarLogo('logo.png', 180);
+  await precargarLogo('logo.png', 90, 'logo_small');
+  if(datos.cliente) await precargarLogo(clienteArchivo(datos.cliente), 200);
+}
 conectar();
+precargarLogos();
 </script>
 </body>
 </html>

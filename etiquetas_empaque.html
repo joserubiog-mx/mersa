@@ -258,6 +258,24 @@ function repartoPaquetes(total,num){const p=[];if(num<=0)return p;const base=Mat
 let paquetes=repartoPaquetes(datos.totalPzas,datos.numPaq);
 // Etiqueta individual 1.25x1: solo VERTIV + sede Reynosa. Una por cada pieza.
 const aplicaIndividual = (datos.cliente.toUpperCase()==="VERTIV" && datos.sede.toLowerCase()==="reynosa");
+// "1 PIEZA" / "N PIEZAS"
+function pzTxt(n){ n=parseInt(n,10)||0; return n===1 ? '1 PIEZA' : n+' PIEZAS'; }
+// Etiquetas chicas 1.25x1 (VERTIV Reynosa): piezas por etiqueta configurable.
+// Ej. 11 pzas con 2 por etiqueta -> [2,2,2,2,2,1] (5 de 2 PIEZAS + 1 de 1 PIEZA)
+let pzsPorChica = 1;
+function repartoChicas(){
+  const total = datos.totalPzas;
+  const per = Math.max(1, Math.min(pzsPorChica, total||1));
+  const out = [];
+  for(let i=0; i<Math.floor(total/per); i++) out.push(per);
+  if(total % per) out.push(total % per);
+  return out;
+}
+function cambiarPzsPorChica(v){
+  const n=parseInt(v,10);
+  pzsPorChica = (n>=1) ? n : 1;
+  actualizarConteos();
+}
 const esEmerson = (datos.cliente.toUpperCase()==="EMERSON APPLETON");
 const esOrto = (datos.cliente.toUpperCase()==="ORTO");
 const esAbb = (datos.cliente.toUpperCase()==="ABB");
@@ -339,14 +357,14 @@ function actualizarConteos(){
   }
 }
 function totalEtiquetasVigente(){
-  return paquetes.length*etiquetasPorJuego + (aplicaIndividual ? datos.totalPzas : 0);
+  return paquetes.length*etiquetasPorJuego + (aplicaIndividual ? repartoChicas().length : 0);
 }
 
 // Banner resumen
 function renderResumen(){
-  const totalEtiquetas = paquetes.length*etiquetasPorJuego + (aplicaIndividual ? datos.totalPzas : 0);
+  const totalEtiquetas = paquetes.length*etiquetasPorJuego + (aplicaIndividual ? repartoChicas().length : 0);
   document.getElementById('summaryBanner').innerHTML=
-    `<div><div class="np">${datos.np||'—'}</div><div class="meta">${datos.totalPzas} PZAS · ${datos.numPaq} PAQUETE(S) · ${datos.cliente} · ${datos.sede}${aplicaIndividual?` · +${datos.totalPzas} IND. 1.25x1`:''}</div></div>
+    `<div><div class="np">${datos.np||'—'}</div><div class="meta">${datos.totalPzas} PZAS · ${datos.numPaq} PAQUETE(S) · ${datos.cliente} · ${datos.sede}${aplicaIndividual?` · +${repartoChicas().length} IND. 1.25x1`:''}</div></div>
      <div class="badge">${totalEtiquetas}</div>`;
 }
 renderResumen();
@@ -375,14 +393,14 @@ function preview(cant){
     <div class="emp-lbl emp1" style="align-items:center;justify-content:center;position:relative;">
       <div style="text-align:center;">
         <div class="l1" style="font-size:26px;">${datos.np}</div>
-        <div class="l2" style="font-size:20px;">${cant} PIEZAS</div>
+        <div class="l2" style="font-size:20px;">${pzTxt(cant)}</div>
       </div>
       <div style="position:absolute;right:6px;bottom:5px;">${rubio(22)}</div>
     </div>
     ${etq2}
     <div class="emp-lbl emp3" style="position:relative;">
       <div class="np" style="font-size:26px;">${datos.np}</div>
-      <div class="pz" style="font-size:18px;">${cant} PIEZAS</div>
+      <div class="pz" style="font-size:18px;">${pzTxt(cant)}</div>
       <div style="font-size:14px;font-weight:800;">${ocPrev}</div>
       <div style="position:absolute;right:6px;bottom:5px;">${rubio(20)}</div>
     </div>
@@ -421,7 +439,7 @@ function renderLabels(){
     <div class="label-card">
       <div class="label-card-head"><span class="ocl">Amarilla</span><span class="npr">2×4 · 1 por paquete</span></div>
       <div class="preview-wrap"><div style="width:200px;height:100px;background:#ffe600;color:#000;border-radius:4px;padding:8px;font-family:Arial;display:flex;flex-direction:column;justify-content:center;gap:3px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;">${rubio(14)}<span style="font-weight:800;font-size:14px;">${cantEj} PIEZAS</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;">${rubio(14)}<span style="font-weight:800;font-size:14px;">${pzTxt(cantEj)}</span></div>
         <div style="font-weight:800;font-size:14px;">${datos.np}</div>
         <div style="font-size:12px;">O.C ${o.oc}</div>
       </div></div>
@@ -471,7 +489,7 @@ function renderLabels(){
             <div style="font-weight:800;font-size:9px;">${datos.np}</div>
             <div style="font-size:6px;">${revFmt}</div>
             <div style="font-size:6px;font-weight:600;">${datos.desc}</div>
-            <div style="font-size:6px;">${q} PZAS</div>
+            <div style="font-size:6px;">${q===1?'1 PZA':q+' PZAS'}</div>
             <div style="font-size:5px;">${fechaCorta}</div>
             <div style="position:absolute;right:3px;bottom:3px;">${rubio(8)}</div>
           </div>`).join('')}
@@ -518,28 +536,35 @@ function reAplicarPreviewIndividual(){
   if(prev) prev.remove();
   if(!aplicaIndividual) return;
   const rubioImg = `<img src="logo.png" style="height:10px;" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'RUBIO'}))">`;
+  const chicas = repartoChicas();
+  const per = chicas[0] || 1;
+  const resto = chicas.length>0 && chicas[chicas.length-1]!==per ? chicas[chicas.length-1] : 0;
+  const nPer = resto ? chicas.length-1 : chicas.length;
+  const detalle = `${nPer} de ${pzTxt(per)}` + (resto ? ` + 1 de ${pzTxt(resto)}` : '');
+  const muestra = chicas.slice(0,3);
   const card = document.createElement('div');
   card.className = 'label-card';
   card.id = 'indPreviewCard';
   card.innerHTML = `
-    <div class="label-card-head"><span class="ocl">Etiqueta individual</span><span class="npr">${datos.totalPzas} etiquetas (1 por pieza)</span></div>
+    <div class="label-card-head"><span class="ocl">Etiqueta individual</span><span class="npr">${chicas.length} etiqueta(s): ${detalle}</span></div>
+    <div class="map-row" style="margin:6px 0 10px;"><label>Piezas por etiqueta</label><input type="number" min="1" max="${datos.totalPzas||1}" step="1" value="${pzsPorChica}" onchange="cambiarPzsPorChica(this.value)" style="width:90px"></div>
     <div class="preview-wrap">
       <div style="display:flex;gap:6px;">
-        ${[0,1,2].map(()=>`
+        ${muestra.map(q=>`
           <div style="width:80px;height:64px;background:#fff;color:#000;border-radius:3px;padding:4px 5px;font-family:Arial,sans-serif;display:flex;flex-direction:column;justify-content:center;gap:1px;position:relative;">
             <div style="font-weight:800;font-size:9px;">${datos.np}</div>
             <div style="font-size:6px;">${revFmt}</div>
             <div style="font-size:6px;font-weight:600;">${datos.desc}</div>
-            <div style="font-size:6px;">1 PIEZA</div>
+            <div style="font-size:6px;">${pzTxt(q)}</div>
             <div style="font-size:6px;">${fechaCorta}</div>
             <div style="position:absolute;right:3px;bottom:3px;">${rubioImg}</div>
           </div>`).join('')}
       </div>
     </div>
-    <div class="tam-label">1.25 × 1 in · 3 por línea · una por cada pieza</div>
+    <div class="tam-label">1.25 × 1 in · 3 por línea · ${pzsPorChica===1?'una por cada pieza':pzTxt(pzsPorChica)+' por etiqueta'}</div>
     <div style="display:flex;gap:8px;">
       <button class="btn-print-single" style="flex:1;" id="btnIndividual1" onclick="imprimirIndividuales(true)">🖨️ IMPRIMIR 1 ETIQUETA</button>
-      <button class="btn-print-single" style="flex:1;" id="btnIndividual" onclick="imprimirIndividuales(false)">🖨️ IMPRIMIR TODAS (${datos.totalPzas})</button>
+      <button class="btn-print-single" style="flex:1;" id="btnIndividual" onclick="imprimirIndividuales(false)">🖨️ IMPRIMIR TODAS (${chicas.length})</button>
     </div>
   `;
   document.getElementById('labelsList').appendChild(card);
@@ -639,7 +664,7 @@ function zplEtiqueta1(c){
   const pos = logoInfDer(gfRubio, 15, 15);
   const rubioZpl = pos ? `^FO${pos.x},${pos.y}${gfRubio.gf}` : `^CF0,50,50\n^FO560,320^FDRUBIO^FS`;
   const fNP = fuenteAdaptativa(datos.np, 760, 130, 45);
-  const txtPz = c + " PIEZAS";
+  const txtPz = pzTxt(c);
   const fPz = fuenteAdaptativa(txtPz, 760, 100, 40);
   return `^XA
 ^CI28
@@ -717,7 +742,7 @@ function zplEtiqueta3(c){
   const pos = logoInfDer(gfRubio, 15, 15);
   const rubioZpl = pos ? `^FO${pos.x},${pos.y}${gfRubio.gf}` : `^CF0,50,50\n^FO560,320^FDRUBIO^FS`;
   const fNP = fuenteAdaptativa(datos.np, 620, 110, 40);
-  const txtPz = c + " PIEZAS";
+  const txtPz = pzTxt(c);
   const fPz = fuenteAdaptativa(txtPz, 620, 90, 36);
   const txtOC = datos.oc + " " + datos.linea;
   const fOC = fuenteAdaptativa(txtOC, 620, 65, 28);
@@ -867,7 +892,8 @@ ${rubioZpl}`;
 // Genera todas las etiquetas individuales, agrupando de 3 en 3 en un ^XA...^XZ
 function zplIndividuales(){
   if(!aplicaIndividual) return "";
-  const total = datos.totalPzas;
+  const chicas = repartoChicas();
+  const total = chicas.length;
   const anchoCol = pasoCol();
   let out = "";
   let i = 0;
@@ -879,7 +905,7 @@ ${ZPL_CFG}
 ^LL203^LH${margenCol()},0
 `;
     for(let col=0; col<3 && i<total; col++, i++){
-      bloque += bloqueIndividual(col*anchoCol, "1 PIEZA") + "\n";
+      bloque += bloqueIndividual(col*anchoCol, pzTxt(chicas[i])) + "\n";
     }
     bloque += "^XZ\n";
     out += bloque;
@@ -900,7 +926,7 @@ ${ZPL_CFG}
 ^LL203^LH${margenCol()},0
 `;
     for(let col=0; col<3 && i<paquetes.length; col++, i++){
-      bloque += bloqueIndividual(col*anchoCol, paquetes[i] + " PZAS") + "\n";
+      bloque += bloqueIndividual(col*anchoCol, paquetes[i]===1 ? "1 PZA" : paquetes[i] + " PZAS") + "\n";
     }
     bloque += "^XZ\n";
     out += bloque;
@@ -973,14 +999,14 @@ async function imprimirIndividuales(soloUno){
 ${ZPL_CFG}
 ^PW812
 ^LL203^LH${margenCol()},0
-` + bloqueIndividual(0) + `
+` + bloqueIndividual(0, pzTxt(repartoChicas()[0]||1)) + `
 ^XZ`;
     } else {
       zplInd = zplIndividuales();
     }
     await enviarZPL(devInd, zplInd);
     if(btn){btn.className='btn-print-single success'; btn.textContent='✓ ENVIADO';}
-    debugLog('Individuales ('+(soloUno?'1':datos.totalPzas)+' pzas) a '+(devInd.name||devInd.uid));
+    debugLog('Individuales ('+(soloUno?'1':repartoChicas().length)+' etiquetas) a '+(devInd.name||devInd.uid));
   }catch(e){ if(btn){btn.className='btn-print-single error'; btn.textContent='✗ ERROR';} debugLog('Error: '+e.message); }
   setTimeout(()=>{ if(btn){btn.className='btn-print-single';btn.textContent=orig;btn.disabled=false;} },3000);
 }
@@ -1056,7 +1082,7 @@ async function imprimirTodo(){
       const devInd = deviceParaTamano('1.25x1');
       const zplInd = zplIndividuales();
       if(devInd && zplInd){
-        debugLog('Enviando etiquetas individuales 1.25x1 ('+datos.totalPzas+' pzas) a '+(devInd.name||devInd.uid));
+        debugLog('Enviando etiquetas individuales 1.25x1 ('+repartoChicas().length+' etiquetas) a '+(devInd.name||devInd.uid));
         await enviarZPL(devInd, zplInd);
       } else if(!devInd){
         showMessage('Faltó asignar impresora 1.25x1 para las etiquetas individuales.','error');

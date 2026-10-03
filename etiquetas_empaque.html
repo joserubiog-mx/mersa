@@ -137,7 +137,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
     <div class="map-row"><label>4 x 6 in</label><select id="printer_4x6"></select></div>
     <div class="map-row"><label>2 x 4 in</label><select id="printer_2x4"></select></div>
     <div class="map-row"><label>1.25 x 1 in</label><select id="printer_125x1"></select></div>
-    <div class="map-row"><label>Paso 1.25x1 (dots)</label><input type="number" id="paso_125x1" min="240" max="300" step="1" onchange="guardarPaso()" title="Distancia entre el inicio de una etiqueta chica y la siguiente. 279 = 1.25in + 0.125in de separación. Si la 2a y 3a se recorren a la izquierda, súbelo; si se recorren a la derecha, bájalo." style="width:90px"></div>
+    <div class="map-row"><label>Paso 1.25x1 (dots)</label><input type="number" id="paso_125x1" min="240" max="300" step="1" onchange="guardarPaso()" title="Distancia entre una etiqueta chica y la siguiente. Si la 2a y 3a quedan más a la izquierda que la 1a, súbelo; si quedan más a la derecha, bájalo." style="width:90px"></div>
+    <div class="map-row"><label>Margen izq. 1.25x1 (dots)</label><input type="number" id="margen_125x1" min="0" max="60" step="1" onchange="guardarMargen()" title="Recorre las 3 columnas juntas. Si todas se cortan a la izquierda, súbelo; si sobra espacio a la izquierda, bájalo." style="width:90px"></div>
     <div class="map-actions">
       <button onclick="guardarConfig()">Guardar</button>
       <button onclick="conectar()">Actualizar lista</button>
@@ -788,7 +789,7 @@ function zplAbbLineas(){
   const anchoCol = pasoCol();
   let out=""; let i=0;
   while(i<total){
-    let b=`^XA\n^CI28\n${ZPL_CFG}\n^PW812\n^LL203\n`;
+    let b=`^XA\n^CI28\n${ZPL_CFG}\n^PW812\n^LL203^LH${margenCol()},0\n`;
     for(let col=0; col<3 && i<total; col++, i++){ b += bloqueAbbLinea(col*anchoCol)+"\n"; }
     b+="^XZ\n"; out+=b;
   }
@@ -807,7 +808,7 @@ function zplAbbNps(){
   const anchoCol = pasoCol();
   let out=""; let i=0;
   while(i<total){
-    let b=`^XA\n^CI28\n${ZPL_CFG}\n^PW812\n^LL203\n`;
+    let b=`^XA\n^CI28\n${ZPL_CFG}\n^PW812\n^LL203^LH${margenCol()},0\n`;
     for(let col=0; col<3 && i<total; col++, i++){ b += bloqueAbbNp(col*anchoCol)+"\n"; }
     b+="^XZ\n"; out+=b;
   }
@@ -815,19 +816,33 @@ function zplAbbNps(){
 }
 
 // ── Paso entre columnas del rollo 1.25x1 (3 por línea) ──
-// 1.25in (254 dots) + separación entre etiquetas (~0.125in = 25 dots) = 279
-const PASO_DEFAULT = 279;
+// Calibrado con la GK420t y el rollo de 3 en línea: paso 266, margen izq. 25
+const MARGEN_DEFAULT = 25;
+function margenCol(){
+  const el=document.getElementById('margen_125x1');
+  const v=el?parseInt(el.value,10):NaN;
+  return (v>=0 && v<=60) ? v : MARGEN_DEFAULT;
+}
+function guardarMargen(){
+  try{ localStorage.setItem('empaque_margen_125x1', String(margenCol())); }catch(e){}
+}
+(function cargarMargen(){
+  let v=MARGEN_DEFAULT;
+  try{ const s=localStorage.getItem('empaque_margen_125x1'); const g=parseInt(s,10); if(s!==null && g>=0&&g<=60) v=g; }catch(e){}
+  const el=document.getElementById('margen_125x1'); if(el) el.value=v;
+})();
+const PASO_DEFAULT = 266;
 function pasoCol(){
   const el=document.getElementById('paso_125x1');
   const v=el?parseInt(el.value,10):NaN;
   return (v>=240 && v<=300) ? v : PASO_DEFAULT;
 }
 function guardarPaso(){
-  try{ localStorage.setItem('empaque_paso_125x1', String(pasoCol())); }catch(e){}
+  try{ localStorage.setItem('empaque_paso_125x1_v2', String(pasoCol())); }catch(e){}
 }
 (function cargarPaso(){
   let v=PASO_DEFAULT;
-  try{ const g=parseInt(localStorage.getItem('empaque_paso_125x1'),10); if(g>=240&&g<=300) v=g; }catch(e){}
+  try{ const g=parseInt(localStorage.getItem('empaque_paso_125x1_v2'),10); if(g>=240&&g<=300) v=g; }catch(e){}
   const el=document.getElementById('paso_125x1'); if(el) el.value=v;
 })();
 
@@ -861,7 +876,7 @@ function zplIndividuales(){
 ^CI28
 ${ZPL_CFG}
 ^PW812
-^LL203
+^LL203^LH${margenCol()},0
 `;
     for(let col=0; col<3 && i<total; col++, i++){
       bloque += bloqueIndividual(col*anchoCol, "1 PIEZA") + "\n";
@@ -882,7 +897,7 @@ function zplIndividualesOrto(){
 ^CI28
 ${ZPL_CFG}
 ^PW812
-^LL203
+^LL203^LH${margenCol()},0
 `;
     for(let col=0; col<3 && i<paquetes.length; col++, i++){
       bloque += bloqueIndividual(col*anchoCol, paquetes[i] + " PZAS") + "\n";
@@ -957,7 +972,7 @@ async function imprimirIndividuales(soloUno){
 ^CI28
 ${ZPL_CFG}
 ^PW812
-^LL203
+^LL203^LH${margenCol()},0
 ` + bloqueIndividual(0) + `
 ^XZ`;
     } else {

@@ -33,6 +33,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .printer-map h3{font-size:11px;color:var(--text-dim);font-family:'IBM Plex Mono',monospace;letter-spacing:1px;margin-bottom:10px;}
 .map-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
 .map-row label{min-width:90px;font-size:12px;color:var(--text-dim);}
+.map-row input{background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px 8px;font-size:12px;font-family:inherit;}
 .map-row select{flex:1;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px 8px;font-size:12px;font-family:inherit;}
 .map-actions{display:flex;gap:8px;margin-top:6px;}
 .map-actions button{background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer;}
@@ -136,6 +137,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
     <div class="map-row"><label>4 x 6 in</label><select id="printer_4x6"></select></div>
     <div class="map-row"><label>2 x 4 in</label><select id="printer_2x4"></select></div>
     <div class="map-row"><label>1.25 x 1 in</label><select id="printer_125x1"></select></div>
+    <div class="map-row"><label>Paso 1.25x1 (dots)</label><input type="number" id="paso_125x1" min="240" max="300" step="1" onchange="guardarPaso()" title="Distancia entre el inicio de una etiqueta chica y la siguiente. 279 = 1.25in + 0.125in de separación. Si la 2a y 3a se recorren a la izquierda, súbelo; si se recorren a la derecha, bájalo." style="width:90px"></div>
     <div class="map-actions">
       <button onclick="guardarConfig()">Guardar</button>
       <button onclick="conectar()">Actualizar lista</button>
@@ -783,10 +785,10 @@ function bloqueAbbLinea(xOff){
 }
 function zplAbbLineas(){
   const total = datos.totalPzas;
-  const anchoCol = 254;
+  const anchoCol = pasoCol();
   let out=""; let i=0;
   while(i<total){
-    let b=`^XA\n^CI28\n${ZPL_CFG}\n^PW762\n^LL203\n`;
+    let b=`^XA\n^CI28\n${ZPL_CFG}\n^PW812\n^LL203\n`;
     for(let col=0; col<3 && i<total; col++, i++){ b += bloqueAbbLinea(col*anchoCol)+"\n"; }
     b+="^XZ\n"; out+=b;
   }
@@ -802,15 +804,32 @@ function bloqueAbbNp(xOff){
 }
 function zplAbbNps(){
   const total = datos.totalPzas;
-  const anchoCol = 254;
+  const anchoCol = pasoCol();
   let out=""; let i=0;
   while(i<total){
-    let b=`^XA\n^CI28\n${ZPL_CFG}\n^PW762\n^LL203\n`;
+    let b=`^XA\n^CI28\n${ZPL_CFG}\n^PW812\n^LL203\n`;
     for(let col=0; col<3 && i<total; col++, i++){ b += bloqueAbbNp(col*anchoCol)+"\n"; }
     b+="^XZ\n"; out+=b;
   }
   return out;
 }
+
+// ── Paso entre columnas del rollo 1.25x1 (3 por línea) ──
+// 1.25in (254 dots) + separación entre etiquetas (~0.125in = 25 dots) = 279
+const PASO_DEFAULT = 279;
+function pasoCol(){
+  const el=document.getElementById('paso_125x1');
+  const v=el?parseInt(el.value,10):NaN;
+  return (v>=240 && v<=300) ? v : PASO_DEFAULT;
+}
+function guardarPaso(){
+  try{ localStorage.setItem('empaque_paso_125x1', String(pasoCol())); }catch(e){}
+}
+(function cargarPaso(){
+  let v=PASO_DEFAULT;
+  try{ const g=parseInt(localStorage.getItem('empaque_paso_125x1'),10); if(g>=240&&g<=300) v=g; }catch(e){}
+  const el=document.getElementById('paso_125x1'); if(el) el.value=v;
+})();
 
 // ── Etiqueta individual 1.25x1 (3 columnas por línea) ──
 function bloqueIndividual(xOff, cantTxt){
@@ -834,14 +853,14 @@ ${rubioZpl}`;
 function zplIndividuales(){
   if(!aplicaIndividual) return "";
   const total = datos.totalPzas;
-  const anchoCol = 254;
+  const anchoCol = pasoCol();
   let out = "";
   let i = 0;
   while(i < total){
     let bloque = `^XA
 ^CI28
 ${ZPL_CFG}
-^PW762
+^PW812
 ^LL203
 `;
     for(let col=0; col<3 && i<total; col++, i++){
@@ -855,14 +874,14 @@ ${ZPL_CFG}
 // Chicas de ORTO: una por paquete, con la cantidad de ese paquete
 function zplIndividualesOrto(){
   if(!esOrto) return "";
-  const anchoCol = 254;
+  const anchoCol = pasoCol();
   let out = "";
   let i = 0;
   while(i < paquetes.length){
     let bloque = `^XA
 ^CI28
 ${ZPL_CFG}
-^PW762
+^PW812
 ^LL203
 `;
     for(let col=0; col<3 && i<paquetes.length; col++, i++){
@@ -877,6 +896,18 @@ ${ZPL_CFG}
 function zplJuego(c){
   if(esEmerson){ return zplEtiqueta2(c)+'\n'; }
   return zplEtiqueta1(c)+'\n'+zplEtiqueta2(c)+'\n'+zplEtiqueta3(c)+'\n';
+}
+
+// Varios juegos ordenados POR TIPO: primero todas las de arriba (1),
+// luego todas las de en medio (2) y al final todas las de abajo (3).
+// cants = lista con la cantidad de cada juego a imprimir (repetida por copias).
+function zplPorTipo(cants){
+  if(esEmerson){ return cants.map(c=>zplEtiqueta2(c)+'\n').join(''); }
+  let z='';
+  cants.forEach(c=>{ z+=zplEtiqueta1(c)+'\n'; });
+  cants.forEach(c=>{ z+=zplEtiqueta2(c)+'\n'; });
+  cants.forEach(c=>{ z+=zplEtiqueta3(c)+'\n'; });
+  return z;
 }
 
 async function enviarZPL(device,zpl){
@@ -899,8 +930,8 @@ async function imprimirGrupo(gi, soloUno){
   try{
     // soloUno: 1 juego. Todos: N copias (una por paquete del grupo) × copias extra
     const veces = soloUno ? 1 : (g.count*copiesExtra);
-    let z='';
-    for(let n=0; n<veces; n++) z+=zplJuego(g.cant);
+    const cants=[]; for(let n=0; n<veces; n++) cants.push(g.cant);
+    const z = zplPorTipo(cants);
     await enviarZPL(device,z);
     btn.className='btn-print-single success'; btn.textContent='✓ ENVIADO';
     debugLog('Grupo '+(gi+1)+' ('+veces+' juego(s) × '+g.cant+' pzas) a '+(device.name||device.uid));
@@ -925,7 +956,7 @@ async function imprimirIndividuales(soloUno){
       zplInd = `^XA
 ^CI28
 ${ZPL_CFG}
-^PW762
+^PW812
 ^LL203
 ` + bloqueIndividual(0) + `
 ^XZ`;
@@ -1001,8 +1032,9 @@ async function imprimirTodo(){
   btn.textContent=`ENVIANDO ${total} ETIQUETAS...`;
   debugLog('Imprimiendo todo: '+total+' etiquetas en '+(device.name||device.uid));
   try{
-    let full='';
-    for(let i=0;i<paquetes.length;i++){for(let k=0;k<copies;k++)full+=zplJuego(paquetes[i]);}
+    const cants=[];
+    for(let i=0;i<paquetes.length;i++){for(let k=0;k<copies;k++)cants.push(paquetes[i]);}
+    const full = zplPorTipo(cants);
     await enviarZPL(device,full);
     // Etiquetas individuales 1.25x1 (VERTIV + Reynosa) a su propia impresora
     if(aplicaIndividual){

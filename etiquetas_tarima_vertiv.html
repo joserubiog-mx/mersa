@@ -93,6 +93,8 @@ function nombrePacking(){
   const p = t.replace(/^packing\s*/i,'').toUpperCase();
   return p;
 }
+// Solo el número del folio: "TarimaMersa-0841" -> "0841"
+const folioNum = (datos.folio.split('-').pop() || datos.folio).trim();
 const ocsArr = datos.ocs ? datos.ocs.split(',').filter(x=>x) : [];
 const npsArr = datos.nps ? datos.nps.split(',').filter(x=>x) : [];
 
@@ -115,12 +117,12 @@ function renderLabel(){
   } else {
     html=`<div class="label-card">
       <div class="label-card-head"><span class="ocl">TARIMA MERSA</span><span class="npr">Folio ${datos.folio}</span></div>
-      <div class="preview-wrap"><div class="lbl-black" style="justify-content:center;text-align:center;">
-        <div class="big">TARIMA</div>
-        <div class="big">MERSA</div>
-        <div class="huge">${datos.folio}</div>
+      <div class="preview-wrap"><div class="lbl-black" style="width:240px;min-height:0;height:160px;justify-content:center;align-items:center;text-align:center;gap:2px;">
+        <div style="font-weight:900;font-size:30px;line-height:1;">TARIMA</div>
+        <div style="font-weight:900;font-size:30px;line-height:1;">MERSA</div>
+        <div style="font-weight:900;font-size:56px;line-height:1;">${folioNum}</div>
       </div></div>
-      <div class="tam-label">Etiqueta TARIMA MERSA + Folio (no packing)</div>
+      <div class="tam-label">Etiqueta TARIMA MERSA + Folio · 6 × 4 in horizontal (no packing)</div>
     </div>`;
   }
   document.getElementById('labelsList').innerHTML=html;
@@ -179,7 +181,8 @@ ${ocZpl}
 ${npZpl}
 ^XZ`;
 }
-// ZPL etiqueta TARIMA MERSA + folio (4x6). Fondo negro.
+// ZPL etiqueta TARIMA MERSA + folio (4x6). Fondo negro. Se lee en HORIZONTAL:
+// texto rotado 90° (^A0R). Visto de lado: arriba TARIMA, en medio MERSA, abajo el número.
 function zplTarimaMersa(){
   return `^XA
 ^CI28
@@ -187,10 +190,9 @@ function zplTarimaMersa(){
 ^PW812
 ^LL1218
 ^FO0,0^GB812,1218,1218,B^FS
-^CF0,150,150
-
-^CF0,200,200
-^FO0,680^FB812,1,0,C,0^FR^FD${datos.folio}^FS
+^FO602,0^A0R,170,170^FB1218,1,0,C,0^FR^FDTARIMA^FS
+^FO417,0^A0R,170,170^FB1218,1,0,C,0^FR^FDMERSA^FS
+^FO62,0^A0R,300,300^FB1218,1,0,C,0^FR^FD${folioNum}^FS
 ^XZ`;
 }
 async function enviarZPL(device,zpl){

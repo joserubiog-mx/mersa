@@ -145,9 +145,9 @@ function renderLabel(){
     html=`<div class="label-card">
       <div class="label-card-head"><span class="ocl">TARIMA MERSA</span><span class="npr">Folio ${datos.folio}</span></div>
       <div class="preview-wrap"><div class="lbl-black" style="${calidadActual().estilo==='marco'?'background:#fff;color:#000;border:6px solid #000;':''}width:240px;min-height:0;height:160px;justify-content:center;align-items:center;text-align:center;gap:2px;">
-        <div style="font-weight:900;font-size:30px;line-height:1;">TARIMA</div>
-        <div style="font-weight:900;font-size:30px;line-height:1;">MERSA</div>
-        <div style="font-weight:900;font-size:56px;line-height:1;">${folioNum}</div>
+        <div style="font-weight:900;font-size:38px;line-height:1;transform:scaleX(1.5);">TARIMA</div>
+        <div style="font-weight:900;font-size:38px;line-height:1;transform:scaleX(1.5);">MERSA</div>
+        <div style="font-weight:900;font-size:62px;line-height:1;transform:scaleX(1.55);">${folioNum}</div>
       </div></div>
       <div class="tam-label">Etiqueta TARIMA MERSA + Folio · 6 × 4 in horizontal (no packing)</div>
     </div>`;
@@ -210,6 +210,9 @@ ${npZpl}
 }
 // ZPL etiqueta TARIMA MERSA + folio (4x6). Fondo negro. Se lee en HORIZONTAL:
 // texto rotado 90° (^A0R). Visto de lado: arriba TARIMA, en medio MERSA, abajo el número.
+// Ancho de los dígitos para que el número ocupe ~1100 de los 1218 dots (máx. 636).
+// Si el folio crece a 5 dígitos, se angosta solo para no salirse.
+function anchoNum(){ const n=Math.max(1,folioNum.length); return Math.min(636, Math.floor(1100/(n*0.44))); }
 function zplTarimaMersa(){
   return `^XA
 ^CI28
@@ -217,9 +220,9 @@ ${zplCalidad()}
 ^PW812
 ^LL1218
 ${zplFondo()}
-^FO602,0^A0R,170,170^FB1218,1,0,C,0^FR^FDTARIMA^FS
-^FO417,0^A0R,170,170^FB1218,1,0,C,0^FR^FDMERSA^FS
-^FO62,0^A0R,300,300^FB1218,1,0,C,0^FR^FD${folioNum}^FS
+^FO549,0^A0R,233,368^FB1218,1,0,C,0^FR^FDTARIMA^FS
+^FO354,0^A0R,233,368^FB1218,1,0,C,0^FR^FDMERSA^FS
+^FO0,0^A0R,382,${anchoNum()}^FB1218,1,0,C,0^FR^FD${folioNum}^FS
 ^XZ`;
 }
 async function enviarZPL(device,zpl){

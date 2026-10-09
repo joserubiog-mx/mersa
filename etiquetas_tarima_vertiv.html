@@ -25,7 +25,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .printer-map h3{font-size:11px;color:var(--text-dim);font-family:'IBM Plex Mono',monospace;letter-spacing:1px;margin-bottom:10px;}
 .map-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
 .map-row label{min-width:90px;font-size:12px;color:var(--text-dim);}
-.map-row select{flex:1;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px 8px;font-size:12px;font-family:inherit;}
+.map-row select,.map-row input{flex:1;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px 8px;font-size:12px;font-family:inherit;}
 .map-actions{display:flex;gap:8px;margin-top:6px;}
 .map-actions button{background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer;}
 .section-title{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--amber);letter-spacing:1.5px;margin-bottom:12px;}
@@ -61,6 +61,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
   <div class="printer-map">
     <h3>IMPRESORA PARA ETIQUETA DE TARIMA</h3>
     <div class="map-row"><label>Etiqueta</label><select id="printer_tarima"></select></div>
+    <div class="map-row"><label>Velocidad</label><select id="cfg_vel" onchange="guardarCalidad()">
+      <option value="2">2 pulg/s (más lenta, mejor negro)</option><option value="3">3 pulg/s</option><option value="4">4 pulg/s</option><option value="6">6 pulg/s</option></select></div>
+    <div class="map-row"><label>Oscuridad</label><select id="cfg_osc" onchange="guardarCalidad()">
+      <option value="-10">-10 (más clara)</option><option value="-5">-5</option><option value="0">0 (la de la impresora)</option><option value="5">+5</option><option value="10">+10 (más oscura)</option></select></div>
+    <div class="map-row"><label>Estilo</label><select id="cfg_estilo" onchange="guardarCalidad();renderLabel();">
+      <option value="negro">Fondo negro (gasta todo el ribbon)</option><option value="marco">Fondo blanco con marco (ahorra ribbon)</option></select></div>
     <div class="map-actions"><button onclick="guardarConfig()">Guardar</button><button onclick="conectar()">Actualizar</button></div>
   </div>
   <div class="section-title">▸ ETIQUETA A IMPRIMIR</div>
@@ -98,6 +104,27 @@ const folioNum = (datos.folio.split('-').pop() || datos.folio).trim();
 const ocsArr = datos.ocs ? datos.ocs.split(',').filter(x=>x) : [];
 const npsArr = datos.nps ? datos.nps.split(',').filter(x=>x) : [];
 
+// ── Calidad de impresión (ZT411, transferencia térmica) ──
+const CAL_DEFAULT={vel:'2',osc:'0',estilo:'negro'};
+function leerCalidad(){
+  let g={}; try{ g=JSON.parse(localStorage.getItem('tarima_calidad')||'{}'); }catch(e){}
+  return Object.assign({},CAL_DEFAULT,g);
+}
+function calidadActual(){
+  const v=id=>{const el=document.getElementById(id); return el?el.value:null;};
+  const g=leerCalidad();
+  return {vel:v('cfg_vel')||g.vel, osc:v('cfg_osc')||g.osc, estilo:v('cfg_estilo')||g.estilo};
+}
+function guardarCalidad(){ try{ localStorage.setItem('tarima_calidad',JSON.stringify(calidadActual())); }catch(e){} }
+(function cargarCalidad(){
+  const g=leerCalidad();
+  [['cfg_vel','vel'],['cfg_osc','osc'],['cfg_estilo','estilo']].forEach(([id,k])=>{const el=document.getElementById(id); if(el) el.value=g[k];});
+})();
+// Encabezado ZPL: transferencia térmica (^MTT), velocidad (^PR) y oscuridad relativa (^MD)
+function zplCalidad(){ const q=calidadActual(); return `^MTT\n^PR${q.vel},${q.vel},${q.vel}\n^MD${q.osc}`; }
+// Fondo: negro completo, o marco negro de 40 dots (el texto ^FR sale negro sobre blanco)
+function zplFondo(){ return calidadActual().estilo==='marco' ? '^FO0,0^GB812,1218,40,B^FS' : '^FO0,0^GB812,1218,1218,B^FS'; }
+
 function renderLabel(){
   let html='';
   if(esPacking){
@@ -105,7 +132,7 @@ function renderLabel(){
     const npLines = npsArr.map(n=>`<div class="big">${n}</div>`).join('');
     html=`<div class="label-card">
       <div class="label-card-head"><span class="ocl">PALLET ${nombrePacking()}</span><span class="npr">Tarima ${datos.numTarima}</span></div>
-      <div class="preview-wrap"><div class="lbl-black">
+      <div class="preview-wrap"><div class="lbl-black" style="${calidadActual().estilo==='marco'?'background:#fff;color:#000;border:5px solid #000;':''}">
         <div class="big">PALLET</div>
         <div class="big">${nombrePacking()}</div>
         <div class="huge">${datos.numTarima}</div>
@@ -117,7 +144,7 @@ function renderLabel(){
   } else {
     html=`<div class="label-card">
       <div class="label-card-head"><span class="ocl">TARIMA MERSA</span><span class="npr">Folio ${datos.folio}</span></div>
-      <div class="preview-wrap"><div class="lbl-black" style="width:240px;min-height:0;height:160px;justify-content:center;align-items:center;text-align:center;gap:2px;">
+      <div class="preview-wrap"><div class="lbl-black" style="${calidadActual().estilo==='marco'?'background:#fff;color:#000;border:6px solid #000;':''}width:240px;min-height:0;height:160px;justify-content:center;align-items:center;text-align:center;gap:2px;">
         <div style="font-weight:900;font-size:30px;line-height:1;">TARIMA</div>
         <div style="font-weight:900;font-size:30px;line-height:1;">MERSA</div>
         <div style="font-weight:900;font-size:56px;line-height:1;">${folioNum}</div>
@@ -167,10 +194,10 @@ function zplPallet(){
   npsArr.forEach(n=>{ npZpl+=`^FO60,${y}^CF0,70,70^FR^FD${n}^FS\n`; y+=80; });
   return `^XA
 ^CI28
-^PR3^MD12
+${zplCalidad()}
 ^PW812
 ^LL1218
-^FO0,0^GB812,1218,1218,B^FS
+${zplFondo()}
 ^CF0,90,90
 ^FO60,60^FR^FDPALLET^FS
 ^CF0,70,70
@@ -186,10 +213,10 @@ ${npZpl}
 function zplTarimaMersa(){
   return `^XA
 ^CI28
-^PR3^MD12
+${zplCalidad()}
 ^PW812
 ^LL1218
-^FO0,0^GB812,1218,1218,B^FS
+${zplFondo()}
 ^FO602,0^A0R,170,170^FB1218,1,0,C,0^FR^FDTARIMA^FS
 ^FO417,0^A0R,170,170^FB1218,1,0,C,0^FR^FDMERSA^FS
 ^FO62,0^A0R,300,300^FB1218,1,0,C,0^FR^FD${folioNum}^FS

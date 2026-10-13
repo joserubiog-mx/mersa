@@ -133,6 +133,28 @@
 
         .detail-value { font-size: 15px; font-weight: 600; }
 
+        /* KPIs reproceso / desperdicio */
+        .kpi-row {
+            display: grid; grid-template-columns: repeat(2, 1fr);
+            gap: 16px; margin-bottom: 20px;
+        }
+        .kpi {
+            border-radius: 12px; padding: 16px 18px;
+            display: flex; align-items: center; justify-content: space-between;
+            border: 1px solid var(--border); background: var(--surface2);
+        }
+        .kpi .kpi-label {
+            font-size: 11px; font-family: 'JetBrains Mono', monospace;
+            letter-spacing: 1px; text-transform: uppercase; color: var(--text-dim);
+        }
+        .kpi .kpi-sub { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+        .kpi .kpi-value { font-family: 'JetBrains Mono', monospace; font-size: 30px; font-weight: 700; }
+        .kpi.repro.on { background: var(--amber-dim); border-color: rgba(245,158,11,.35); }
+        .kpi.repro.on .kpi-value, .kpi.repro.on .kpi-label { color: var(--amber); }
+        .kpi.desp.on { background: var(--red-dim); border-color: rgba(239,68,68,.35); }
+        .kpi.desp.on .kpi-value, .kpi.desp.on .kpi-label { color: var(--red); }
+        .kpi .kpi-value.zero { color: var(--text-muted); }
+
         /* VIEW TOGGLE */
         .view-toggle {
             display: flex; gap: 4px;
@@ -173,6 +195,22 @@
         }
 
         .timeline { position: relative; padding-left: 36px; }
+
+        .timelines-grid { display: grid; grid-template-columns: 1fr; gap: 28px; align-items: start; }
+        .timelines-grid.dos { grid-template-columns: 1fr 1fr; }
+        .timeline-col-title {
+            font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700;
+            letter-spacing: 1px; text-transform: uppercase; margin-bottom: 14px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .timeline-col-title .count {
+            font-size: 10px; padding: 2px 8px; border-radius: 10px;
+            background: var(--surface2); color: var(--text-dim);
+        }
+        .timeline.repro::before { background: linear-gradient(to bottom, var(--amber), var(--border)); }
+        .timeline-dot.reproceso { border-color: var(--amber); }
+        .timeline.repro .timeline-dot.active { background: var(--amber); }
+        .timeline-empty { font-size: 12px; color: var(--text-muted); padding: 8px 0; }
 
         .timeline::before {
             content: ''; position: absolute;
@@ -327,6 +365,7 @@
             .timeline-section, .table-section { margin: 0 20px 30px; }
             .view-toggle { margin: 0 20px 16px; }
             .order-details { grid-template-columns: repeat(2, 1fr); }
+            .timelines-grid.dos { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -354,6 +393,7 @@
                 <div class="order-id" id="orderId">—</div>
                 <div class="order-badge badge-active" id="orderBadge">EN PROCESO</div>
             </div>
+            <div class="kpi-row" id="kpiRow"></div>
             <div class="order-details" id="orderDetails"></div>
         </div>
 
@@ -364,7 +404,16 @@
 
         <div class="timeline-section" id="timelineSection">
             <div class="timeline-title">Movimientos</div>
-            <div class="timeline" id="timeline"></div>
+            <div class="timelines-grid" id="timelinesGrid">
+                <div>
+                    <div class="timeline-col-title" style="color:var(--accent)">Proceso <span class="count" id="countProceso"></span></div>
+                    <div class="timeline" id="timeline"></div>
+                </div>
+                <div id="reproCol" style="display:none;">
+                    <div class="timeline-col-title" style="color:var(--amber)">Reprocesos <span class="count" id="countRepro"></span></div>
+                    <div class="timeline repro" id="timelineRepro"></div>
+                </div>
+            </div>
         </div>
 
         <div class="table-section" id="tableSection">
@@ -434,8 +483,43 @@
             };
         });
 
+        // Ordenar cronológicamente por fecha de registro (empate: orden original)
+        registros.forEach((r, i) => { r._idx = i; r._t = parseFecha(r.fechaRegistro); });
+        registros.sort((a, b) => {
+            if (a._t === null && b._t === null) return a._idx - b._idx;
+            if (a._t === null) return 1;
+            if (b._t === null) return -1;
+            return (a._t - b._t) || (a._idx - b._idx);
+        });
+
         // Order Card
         document.getElementById('orderId').textContent = oc;
+
+        // KPIs: piezas reprocesadas y desperdiciadas
+        const esRepro = r => (r.tipoEnvio || '').trim().toLowerCase() === 'reproceso';
+        const reproCalc = registros.filter(esRepro).reduce((s, r) => s + r.cantidadEnviada, 0);
+        const despCalc = registros.reduce((s, r) => s + r.cantidadDesperdicio, 0);
+        // Se usa el total del Registro Maestro si viene; si no, lo calculado de los movimientos
+        const numOr = (v, alt) => (v !== null && v !== '' && !isNaN(parseInt(v))) ? parseInt(v) : alt;
+        const reproNum = numOr(reproTotal, reproCalc);
+        const despNum = numOr(despTotal, despCalc);
+        const movRepro = registros.filter(esRepro).length;
+        const movDesp = registros.filter(r => r.cantidadDesperdicio > 0).length;
+        document.getElementById('kpiRow').innerHTML = `
+            <div class="kpi repro ${reproNum > 0 ? 'on' : ''}">
+                <div>
+                    <div class="kpi-label">${reproNum > 0 ? '⟲ Piezas reprocesadas' : 'Sin reprocesos'}</div>
+                    <div class="kpi-sub">${movRepro} movimiento(s) de reproceso</div>
+                </div>
+                <div class="kpi-value ${reproNum > 0 ? '' : 'zero'}">${reproNum}</div>
+            </div>
+            <div class="kpi desp ${despNum > 0 ? 'on' : ''}">
+                <div>
+                    <div class="kpi-label">${despNum > 0 ? '✕ Piezas desperdiciadas' : 'Sin desperdicio'}</div>
+                    <div class="kpi-sub">${movDesp} registro(s) con desperdicio</div>
+                </div>
+                <div class="kpi-value ${despNum > 0 ? '' : 'zero'}">${despNum}</div>
+            </div>`;
 
         const badge = document.getElementById('orderBadge');
         if (estatus === 'Enviado') {
@@ -473,8 +557,17 @@
             </div>
         `).join('');
 
-        // Timeline
-        renderTimeline(registros);
+        // Timeline: proceso normal y reprocesos por separado
+        const normales = registros.filter(r => !esRepro(r));
+        const repros = registros.filter(esRepro);
+        renderTimeline(normales, 'timeline');
+        document.getElementById('countProceso').textContent = normales.length;
+        if (repros.length > 0) {
+            renderTimeline(repros, 'timelineRepro');
+            document.getElementById('countRepro').textContent = repros.length;
+            document.getElementById('reproCol').style.display = 'block';
+            document.getElementById('timelinesGrid').classList.add('dos');
+        }
         renderTable(registros);
     }
 
@@ -502,9 +595,39 @@
         return `<span class="area-tag tag-${type}">${labels[type] || 'PRODUCCIÓN'}</span>`;
     }
 
-    function renderTimeline(registros) {
-        document.getElementById('timeline').innerHTML = registros.map((r, i) => {
-            const type = getAreaType(r.area);
+    // Convierte la fecha de Zoho a número para ordenar.
+    // Acepta: 12-Oct-2026 14:05:00 · 12/10/2026 14:05 · 2026-10-12 14:05:00 · 12-oct-2026
+    function parseFecha(s) {
+        if (!s) return null;
+        s = String(s).trim();
+        const meses = {jan:0,ene:0,feb:1,mar:2,apr:3,abr:3,may:4,jun:5,jul:6,aug:7,ago:7,sep:8,set:8,oct:9,nov:10,dec:11,dic:11};
+        let m, d, mo, y, h = 0, mi = 0, se = 0;
+        const hora = s.match(/(\d{1,2}):(\d{2})(?::(\d{2}))?\s*([ap]\.?\s?m\.?)?/i);
+        if (hora) {
+            h = +hora[1]; mi = +hora[2]; se = +(hora[3] || 0);
+            const ap = (hora[4] || '').toLowerCase();
+            if (ap.startsWith('p') && h < 12) h += 12;
+            if (ap.startsWith('a') && h === 12) h = 0;
+        }
+        if ((m = s.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/))) { y = +m[1]; mo = +m[2] - 1; d = +m[3]; }
+        else if ((m = s.match(/^(\d{1,2})[-\/ ]([A-Za-zÁÉÍÓÚáéíóú]{3,})\.?[-\/ ](\d{4})/))) {
+            d = +m[1]; mo = meses[m[2].slice(0,3).toLowerCase()]; y = +m[3];
+            if (mo === undefined) return null;
+        }
+        else if ((m = s.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})/))) {
+            let a = +m[1], b = +m[2]; y = +m[3];
+            // Día primero (formato México); si el segundo número es > 12, era mes/día
+            if (b > 12) { mo = a - 1; d = b; } else { d = a; mo = b - 1; }
+        }
+        else { const t = Date.parse(s); return isNaN(t) ? null : t; }
+        return new Date(y, mo, d, h, mi, se).getTime();
+    }
+
+    function renderTimeline(registros, contenedor) {
+        const el = document.getElementById(contenedor);
+        if (registros.length === 0) { el.innerHTML = '<div class="timeline-empty">Sin movimientos</div>'; return; }
+        el.innerHTML = registros.map((r, i) => {
+            const type = (r.tipoEnvio || '').toLowerCase() === 'reproceso' ? 'reproceso' : getAreaType(r.area);
             const isLast = i === registros.length - 1;
             const dotClass = isLast ? `${type} active` : type;
 

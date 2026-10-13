@@ -497,11 +497,19 @@
 
         // KPIs: piezas reprocesadas y desperdiciadas
         const esRepro = r => (r.tipoEnvio || '').trim().toLowerCase() === 'reproceso';
-        const reproCalc = registros.filter(esRepro).reduce((s, r) => s + r.cantidadEnviada, 0);
+        // Piezas reprocesadas: lo que mandó a reproceso el área que INICIÓ el reproceso
+        // (la primera en fecha). Las áreas siguientes solo pasan esas mismas piezas,
+        // así que no se vuelven a sumar (Pulido 1 → Doblez 1 = 1 pieza, no 2).
+        const reprosOrd = registros.filter(esRepro);
+        const areaInicioRepro = reprosOrd.length ? reprosOrd[0].area : '';
+        const reproCalc = reprosOrd.filter(r => r.area === areaInicioRepro).reduce((s, r) => s + r.cantidadEnviada, 0);
+        const areasRepro = [...new Set(reprosOrd.map(r => r.area))];
         const despCalc = registros.reduce((s, r) => s + r.cantidadDesperdicio, 0);
         // Se usa el total del Registro Maestro si viene; si no, lo calculado de los movimientos
         const numOr = (v, alt) => (v !== null && v !== '' && !isNaN(parseInt(v))) ? parseInt(v) : alt;
-        const reproNum = numOr(reproTotal, reproCalc);
+        // El total del Registro Maestro solo cuenta reprocesos de la primera área de la orden,
+        // por eso se toma el mayor entre ese total y lo calculado de los movimientos.
+        const reproNum = Math.max(numOr(reproTotal, 0), reproCalc);
         const despNum = numOr(despTotal, despCalc);
         const movRepro = registros.filter(esRepro).length;
         const movDesp = registros.filter(r => r.cantidadDesperdicio > 0).length;
@@ -509,7 +517,7 @@
             <div class="kpi repro ${reproNum > 0 ? 'on' : ''}">
                 <div>
                     <div class="kpi-label">${reproNum > 0 ? '⟲ Piezas reprocesadas' : 'Sin reprocesos'}</div>
-                    <div class="kpi-sub">${movRepro} movimiento(s) de reproceso</div>
+                    <div class="kpi-sub">${movRepro > 0 ? `Inició en ${areaInicioRepro} · ${movRepro} movimiento(s) en ${areasRepro.length} área(s)` : 'Ningún movimiento de reproceso'}</div>
                 </div>
                 <div class="kpi-value ${reproNum > 0 ? '' : 'zero'}">${reproNum}</div>
             </div>

@@ -65,6 +65,11 @@
             color: #fff;
             transition: all 0.2s;
         }
+        .btn-etq {
+            margin-top: 10px;
+            background: #1a2030;
+            border: 1px solid #2a3348;
+        }
         .btn-print:hover {
             transform: translateY(-1px);
             box-shadow: 0 4px 16px rgba(59,130,246,0.3);
@@ -349,6 +354,7 @@
 
     <div class="screen-controls">
         <button class="btn-print" onclick="window.print()">🖨️&nbsp;&nbsp;IMPRIMIR / GUARDAR PDF</button>
+        <button class="btn-print btn-etq" id="btnEtq" style="display:none;" onclick="abrirEtiqueta()">🏷️&nbsp;&nbsp;IMPRIMIR ETIQUETA DE TARIMA</button>
     </div>
 
     <div class="print-area">
@@ -504,6 +510,12 @@
     }
 
     const { header, partidas } = getData();
+
+    // ── Botón de etiqueta de tarima (Browser Print) ──
+    // El On Success manda en "etq" el enlace corto de etiquetas_tarima_vertiv.html.
+    const etqURL = new URLSearchParams(window.location.search).get('etq') || '';
+    function abrirEtiqueta(){ if (etqURL) window.open(etqURL, '_blank'); }
+    if (etqURL) { const b = document.getElementById('btnEtq'); if (b) b.style.display = 'block'; }
 
     // ── Formatear fecha como "Martes 09 de junio del 2026" ──
     function parseFecha(fechaStr) {

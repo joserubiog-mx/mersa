@@ -353,13 +353,19 @@
     });
   }
 
+  // Totales: Zoho los manda ya calculados (tp, ts, np) porque solo envía el top de cada lista.
+  // Si no vienen (modo demo), se calculan con los datos recibidos.
   function renderTotals() {
-    const piezas = data.productos.reduce(function (s, r) { return s + r.piezas; }, 0);
-    const sols = data.productos.reduce(function (s, r) { return s + r.solicitudes; }, 0);
+    const tp = params.get('tp'), ts = params.get('ts'), np = params.get('np');
+    const piezas = tp !== null ? (parseFloat(tp) || 0)
+      : data.productos.reduce(function (s, r) { return s + r.piezas; }, 0);
+    const sols = ts !== null ? (parseInt(ts, 10) || 0)
+      : data.productos.reduce(function (s, r) { return s + r.solicitudes; }, 0);
+    const prods = np !== null ? (parseInt(np, 10) || 0) : data.productos.length;
     document.getElementById('totals').innerHTML =
       '<div><strong>' + fmt(piezas) + '</strong>piezas entregadas</div>' +
       '<div><strong>' + fmt(sols) + '</strong>solicitudes</div>' +
-      '<div><strong>' + fmt(data.productos.length) + '</strong>productos distintos</div>';
+      '<div><strong>' + fmt(prods) + '</strong>productos distintos</div>';
   }
 
   function renderAll() { ['productos', 'motivos', 'extravio'].forEach(render); }

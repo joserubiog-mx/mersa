@@ -563,9 +563,11 @@
             'usa delaware': 'Delaware',
             'usa ironton': 'Ironton',
             'usa sullivan': 'Sullivan',
+            'everyday technologies': 'EVERYDAY',
         };
         const low = t.toLowerCase();
         if (repl[low]) return repl[low];
+        if (low.startsWith('everyday')) return 'EVERYDAY';
         return t;
     }
     for (let i = 0; i < labelsData.length; i++) {
@@ -625,8 +627,8 @@
 
 ^FO285,20^CF0,20,20^FDOCL^FS
 ^FO285,42^BQN,2,4^FDMA,${d.ordenCompraLinea}^FS
-^FO285,200^CF0,20,20^FDNPR^FS
-^FO285,222^BQN,2,4^FDMA,${d.numeroParte}\t${d.revision}^FS
+^FO296,290^CF0,20,20^FDNPR^FS
+^FO296,312^BQN,2,4^FDMA,${d.numeroParte}\t${d.revision}^FS
 ${bottomZPL}
 ^XZ`;
     }
@@ -682,12 +684,12 @@ ${bottomZPL}
                                             <div style="font-size:16px;color:#000;">⬡</div>
                                         </div>
                                     </div>
-                                    <div style="display:flex;flex-direction:column;align-items:center;">
-                                        <span style="font-size:9px;color:#000;font-weight:700;">NPR</span>
-                                        <div style="width:52px;height:52px;border:1.5px solid #000;border-radius:2px;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-                                            <div style="font-size:16px;color:#000;">⬡</div>
-                                        </div>
-                                    </div>
+                                </div>
+                            </div>
+                            <div style="position:absolute;right:6px;bottom:6px;display:flex;flex-direction:column;align-items:center;">
+                                <span style="font-size:9px;color:#000;font-weight:700;">NPR</span>
+                                <div style="width:52px;height:52px;border:1.5px solid #000;border-radius:2px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#fff;">
+                                    <div style="font-size:16px;color:#000;">⬡</div>
                                 </div>
                             </div>
                             <div class="bottom-zone">

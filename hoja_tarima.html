@@ -545,7 +545,7 @@
     header.fechaEN = formatearFechaIngles(fechaOriginal);
 
     // ══════════════════════════════════════════════════════════
-    //  LAYOUTS ESPECIALES: PACKING DELAWARE Y DHL
+    //  LAYOUTS ESPECIALES: PACKING DELAWARE, IRONTON, RAYMATH Y DHL
     // ══════════════════════════════════════════════════════════
 
     function splitOC(ocLinea) {
@@ -573,6 +573,11 @@
         st.textContent = '@media print { @page { size: letter portrait; } }';
         document.head.appendChild(st);
         renderIronton();
+    } else if (tarimaLower.startsWith('packing raymath')) {
+        const st = document.createElement('style');
+        st.textContent = '@media print { @page { size: letter portrait; } }';
+        document.head.appendChild(st);
+        renderRaymath();
     } else if (tarimaLower === 'dhl') {
         const st = document.createElement('style');
         st.textContent = '@media print { @page { size: letter portrait; } }';
@@ -742,6 +747,100 @@
                     Vertiv Corporation<br>
                     3040 South 9th Street<br>
                     Ironton, OH 45638<br>
+                    United States
+                </div>
+            </div>
+            <table class="dw-table">
+                <thead>
+                    <tr>
+                        <th style="width:90px;">PO</th>
+                        <th>DESCRIPTION</th>
+                        <th style="width:85px;">ITEM</th>
+                        <th style="width:60px;">LINE</th>
+                        <th style="width:50px;">QTY</th>
+                        <th style="width:65px;">PACKAGE</th>
+                        <th style="width:70px;">INVOICE</th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>
+            <div class="dw-notes">
+                <div class="nt-label">NOTES :</div>
+                <div class="nt-box">
+                    <div class="nt-left">
+                        <div class="nt-pallet">PALLET ${palletNum}</div>
+                        <div class="nt-dim-title">PALLET DIMENSIONS</div>
+                        <div class="nt-dim-row"><span>Depth</span><span>${tam.depth} cm</span></div>
+                        <div class="nt-dim-row"><span>Width</span><span>${tam.width} cm</span></div>
+                        <div class="nt-dim-row"><span>Height</span><span>${tam.height} cm</span></div>
+                    </div>
+                    <div class="nt-right">
+                        Pallet with ${totalPaquetes} packages<br>
+                        Weight &nbsp;${pesoTotal} KG
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // ── PACKING RAYMATH (Coldwater, OH) ──
+    function renderRaymath() {
+        const tamanos = {
+            'pequeña':  { depth: 60,  width: 54,  height: 40, peso: 7.4 },
+            'pequena':  { depth: 60,  width: 54,  height: 40, peso: 7.4 },
+            'chica':    { depth: 60,  width: 54,  height: 40, peso: 7.4 },
+            'mediana':  { depth: 60,  width: 103, height: 40, peso: 13 },
+            'grande':   { depth: 120, width: 100, height: 40, peso: 23.8 },
+        };
+        const tam = tamanos[(header.tamano || '').toLowerCase()] || tamanos['chica'];
+
+        let rows = '';
+        let totalPaquetes = 0;
+        let pesoUnitarios = 0;
+        for (let i = 0; i < partidas.length; i++) {
+            const p = partidas[i];
+            const { oc, linea } = splitOC(p.ocLinea || '');
+            const inv = ultimaFacturaDe(p.factura);
+            const paq = parseFloat(p.paquetes) || 0;
+            const cant = parseFloat(p.cantidad) || 0;
+            const pu = parseFloat(p.pu) || 0;
+            totalPaquetes += paq;
+            pesoUnitarios += pu * cant;
+            rows += `<tr>
+                <td>${oc}</td>
+                <td>BUSBAR</td>
+                <td>${p.numeroParte || ''}</td>
+                <td>${linea}</td>
+                <td>${p.cantidad || ''}</td>
+                <td>${p.paquetes || ''}</td>
+                <td>${inv}</td>
+            </tr>`;
+        }
+        for (let i = partidas.length; i < 25; i++) {
+            rows += `<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>`;
+        }
+
+        const pesoTotal = (pesoUnitarios + tam.peso).toFixed(1);
+        const palletNum = header.numTarima || '1';
+
+        document.querySelector('.print-area').innerHTML = `
+            <div class="dw-header">
+                <div class="dw-side">MAQUINADOS<br>ESPECIALES</div>
+                <img src="logo.png" alt="RUBIO" style="height:58px; width:auto;">
+                <div class="dw-side">ESTABLECIDO<br>EN 1970</div>
+            </div>
+            <div class="dw-meta">
+                Date: &nbsp;&nbsp; ${header.fechaEN}<br>
+                BOARDING NUMBER ${header.boarding}
+            </div>
+            <div class="dw-shipto">
+                <div class="st-title">Ship To / Envio a :</div>
+                <div class="st-row">Company Name / RAYMATH COLDWATER</div>
+                <div class="st-row">Address :</div>
+                <div class="st-address">
+                    Raymath Coldwater<br>
+                    BLDG 48, 110 Pearl ST<br>
+                    Coldwater, OH 45828<br>
                     United States
                 </div>
             </div>

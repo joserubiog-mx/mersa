@@ -51,6 +51,13 @@
   .bar-wrap{position:relative;height:120px;}
   .foot{color:var(--muted);font-size:12px;text-align:center;margin-top:18px;}
   .empty{color:var(--muted);text-align:center;padding:40px;font-size:15px;}
+  .dist-table{width:100%;border-collapse:collapse;font-size:14px;}
+  .dist-table th{padding:10px 8px;color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid var(--line);}
+  .dist-table td{padding:12px 8px;border-bottom:1px solid var(--line);}
+  .dist-table .n{text-align:right;font-variant-numeric:tabular-nums;font-weight:700;}
+  .dist-bar{height:8px;background:var(--panel2);border-radius:4px;overflow:hidden;min-width:90px;}
+  .dist-bar span{display:block;height:100%;border-radius:4px;}
+  @media (max-width:640px){ .cards{grid-template-columns:repeat(2,1fr);} }
 </style>
 </head>
 <body>
@@ -123,6 +130,22 @@
       </table>
     </div>
 
+    <div class="chart-panel" id="distPanel" style="display:none;">
+      <h2>Distribución desde Entrada Acabado</h2>
+      <table class="dist-table">
+        <thead>
+          <tr>
+            <th style="text-align:left;">Área destino</th>
+            <th style="text-align:right;">Enviadas</th>
+            <th style="text-align:right;">Ingresadas</th>
+            <th style="text-align:right;">Pendientes</th>
+            <th style="text-align:left;">Avance</th>
+          </tr>
+        </thead>
+        <tbody id="distTbody"></tbody>
+      </table>
+    </div>
+
     <div class="chart-panel" id="excPanel" style="display:none;">
       <h2>Órdenes registradas sin registro previo del área anterior</h2>
       <table style="width:100%; border-collapse:collapse; font-size:13px;">
@@ -158,6 +181,12 @@
     ? exclistRaw.split('§').map(r => { const c = r.split('¦'); return { oc: c[0] || '', np: c[1] || '' }; })
     : [];
 
+  // Distribución de Entrada Acabado: "Area~Enviadas~Ingresadas|..."
+  const distRaw = p.get('dist') || '';
+  const distItems = distRaw
+    ? distRaw.split('|').map(r => { const c = r.split('~'); return { area: c[0] || '', env: parseInt(c[1]) || 0, ing: parseInt(c[2]) || 0 }; })
+    : [];
+
   const meses = ['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
   const mesTxt = (mes >= 1 && mes <= 12) ? meses[mes] : '—';
 
@@ -179,6 +208,24 @@
     ).join('');
     document.getElementById('excPanel').style.display = 'block';
   }
+  // ── Distribución desde Entrada Acabado ──
+  if (distItems.length > 0) {
+    document.getElementById('distTbody').innerHTML = distItems.map(it => {
+      const pctD = it.env > 0 ? Math.min(100, Math.round(it.ing * 100 / it.env)) : 0;
+      const col = pctD >= 90 ? 'var(--ok)' : pctD >= 60 ? 'var(--warn)' : 'var(--bad)';
+      const pend = Math.max(0, it.env - it.ing);
+      return '<tr>' +
+        '<td><b>' + it.area + '</b></td>' +
+        '<td class="n" style="color:var(--accent)">' + it.env + '</td>' +
+        '<td class="n" style="color:var(--ok)">' + it.ing + '</td>' +
+        '<td class="n" style="color:' + (pend > 0 ? 'var(--warn)' : 'var(--muted)') + '">' + pend + '</td>' +
+        '<td><div style="display:flex;align-items:center;gap:8px;"><div class="dist-bar" style="flex:1;"><span style="width:' + pctD + '%;background:' + col + ';"></span></div>' +
+        '<span style="font-size:12px;color:var(--muted);min-width:36px;text-align:right;">' + (it.env > 0 ? pctD + '%' : '—') + '</span></div></td>' +
+        '</tr>';
+    }).join('');
+    document.getElementById('distPanel').style.display = 'block';
+  }
+
   document.getElementById('foot').textContent =
     'El área registró ' + num + ' de ' + den + ' órdenes que le fueron enviadas en ' + mesTxt + ' ' + anio + '.' +
     (exc > 0 ? ' Además, ' + exc + ' orden(es) fueron registradas sin tener registro previo del área anterior.' : '');

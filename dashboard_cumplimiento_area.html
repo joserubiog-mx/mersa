@@ -71,11 +71,11 @@
     <div class="cards">
       <div class="card">
         <div class="num" id="cNum" style="color:var(--ok)">0</div>
-        <div class="lbl">Registradas por el área</div>
+        <div class="lbl">Registradas de las mandadas</div>
       </div>
       <div class="card">
         <div class="num" id="cDen" style="color:var(--accent)">0</div>
-        <div class="lbl">Mandadas al área</div>
+        <div class="lbl">Mandadas al área en el mes</div>
       </div>
       <div class="card">
         <div class="num pct-big" id="cPct">0%</div>
@@ -107,7 +107,7 @@
             <td style="padding:12px 8px; text-align:right;" id="rPeriodo">—</td>
           </tr>
           <tr style="border-bottom:1px solid var(--line);">
-            <td style="padding:12px 8px; color:var(--muted);">Registradas por el área</td>
+            <td style="padding:12px 8px; color:var(--muted);">Registradas de las mandadas</td>
             <td style="padding:12px 8px; text-align:right; font-weight:bold; color:var(--ok);" id="rNum">0</td>
           </tr>
           <tr style="border-bottom:1px solid var(--line);">
@@ -175,6 +175,7 @@
   pct = Math.round(pct * 10) / 10;
   const modo = (p.get('modo') || 'grafica').toLowerCase();
   const exc = parseInt(p.get('exc') || '0', 10);
+  const hasta = p.get('hasta') || '';
   // Lista de excluidas: filas §, campos ¦ -> oc¦np  (NO doble-decodificar)
   const exclistRaw = p.get('exclist') || '';
   const excItems = exclistRaw
@@ -191,7 +192,7 @@
   const mesTxt = (mes >= 1 && mes <= 12) ? meses[mes] : '—';
 
   document.getElementById('areaName').textContent = area;
-  document.getElementById('periodo').textContent = mesTxt + ' ' + anio;
+  document.getElementById('periodo').textContent = mesTxt + ' ' + anio + (hasta ? ' · registros hasta el ' + hasta : '');
   document.getElementById('cNum').textContent = num;
   document.getElementById('cDen').textContent = den;
   document.getElementById('cPct').textContent = pct + '%';
@@ -226,9 +227,12 @@
     document.getElementById('distPanel').style.display = 'block';
   }
 
+  const pend = Math.max(0, den - num);
   document.getElementById('foot').textContent =
-    'El área registró ' + num + ' de ' + den + ' órdenes que le fueron enviadas en ' + mesTxt + ' ' + anio + '.' +
-    (exc > 0 ? ' Además, ' + exc + ' orden(es) fueron registradas sin tener registro previo del área anterior.' : '');
+    'De las ' + den + ' órdenes que se mandaron a ' + area + ' en ' + mesTxt + ' ' + anio +
+    ', el área ha registrado ' + num + (hasta ? ' (contando sus registros hasta el ' + hasta + ')' : '') + '.' +
+    (pend > 0 ? ' Faltan ' + pend + ' por registrar.' : '') +
+    (exc > 0 ? ' Además, registró ' + exc + ' orden(es) sin que el área anterior se las mandara en el mes ni en el mes anterior.' : '');
 
   // color según nivel de cumplimiento
   let barColor = '#ef4444';

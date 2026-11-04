@@ -466,6 +466,10 @@
             nombre: "VERTIV MTY-TORRES",
             direccion: "AV. LUIS GUADALUPE FERNANDEZ TALAMANTE No. 3502, PARQUE FINSA, SANTA CATARINA, C.P. 66380, NUEVO LEON MEXICO."
         },
+        condesa: {
+            nombre: "CONDESA",
+            direccion: "COSSIO 700 NÚMERO INTERIOR 6A, COLONIA PARQUE INDUSTRIAL CONDESA, CP 21395"
+        },
         appleton: {
             nombre: "APPLETON-TORRES",
             direccion: "VIA MONTERREY MATAMOROS N.598, PARQUE INDUSTRIAL MILENIUM, APODACA, C.P. 66626. MONTERREY"
@@ -496,6 +500,7 @@
             tamano: p.get('tt') || '',
             boarding: p.get('bn') || '',
             folio: p.get('folio') || '',
+            dest: (p.get('dest') || '').toLowerCase(),   // "condesa" si alguna partida es de sede CONDESA
         };
         let partidas = [];
         const jsonParam = p.get('partidas');
@@ -912,7 +917,8 @@
     // ── LAYOUT ORIGINAL (TARIMAS / DESTINOS) ──
     function renderDefault() {
 
-    const destino = getDestino(header.tarima);
+    // Sede CONDESA (lo decide el On Success según la sede de las partidas)
+    const destino = header.dest === 'condesa' ? destinos.condesa : getDestino(header.tarima);
 
     // ══════════════════════════════════════════════════════════
     //  RENDER

@@ -97,6 +97,8 @@ const esPacking = datos.tarima.toLowerCase().startsWith('packing');
 function nombrePacking(){
   const t = datos.tarima.trim();
   const p = t.replace(/^packing\s*/i,'').toUpperCase();
+  // Nombres largos abreviados para que quepan en la etiqueta PALLET
+  if (p.startsWith('EVERYDAY')) return 'EVERYDAY';
   return p;
 }
 // Solo el número del folio: "TarimaMersa-0841" -> "0841"

@@ -665,6 +665,9 @@ function moduloBarras(dato, anchoDisp){
 }
 // Config común: velocidad y darkness para que no se jale la tinta
 const ZPL_CFG = "^PR3^MD10";  // PR3 = 3 ips (más lento), MD10 = darkness medio-alto
+// Etiqueta VERTIV 6 x 4 (ZT411): SIN oscuridad extra. Con +10 el cabezal quema y rompe el ribbon.
+// ^MTT = transferencia térmica · ^PR3 = 3 pulg/s · ^MD0 = la oscuridad configurada en la impresora
+const ZPL_CFG_6X4 = "^MTT^PR3^MD0";
 
 function zplEtiqueta1(c){
   const gfRubio = gfCache['logo.png'];
@@ -953,7 +956,7 @@ function cuerpoZPL(z){
 function zplVertiv6x4(c){
   return `^XA
 ^CI28
-${ZPL_CFG}
+${ZPL_CFG_6X4}
 ^PW812
 ^LL1218
 ^LH0,0

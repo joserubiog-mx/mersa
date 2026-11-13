@@ -85,6 +85,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .debug-content{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-dim);background:#0a0d12;border:1px solid var(--border);border-radius:8px;padding:10px;max-height:180px;overflow:auto;margin-top:8px;white-space:pre-wrap;display:none;}
 /* Preview de las 3 etiquetas de empaque apiladas (2x4 cada una) */
 .emp-stack{display:flex;flex-direction:column;gap:6px;width:260px;}
+.emp-stack.una{gap:0;background:#fff;border-radius:4px;padding:2px 0;}
+.emp-stack.una .emp-lbl{border-radius:0;}
+.emp-stack.una .emp-lbl + .emp-lbl{border-top:1px dashed #999;}
 .emp-lbl{background:#fff;color:#000;border-radius:3px;font-family:Arial,sans-serif;padding:8px 10px;width:260px;height:120px;box-sizing:border-box;overflow:hidden;}
 /* Etiqueta 1: texto grande */
 .emp1{display:flex;flex-direction:column;justify-content:center;gap:2px;}
@@ -279,7 +282,11 @@ function cambiarPzsPorChica(v){
 const esEmerson = (datos.cliente.toUpperCase()==="EMERSON APPLETON");
 const esOrto = (datos.cliente.toUpperCase()==="ORTO");
 const esAbb = (datos.cliente.toUpperCase()==="ABB");
-const etiquetasPorJuego = (esEmerson || esOrto) ? 1 : 3;
+// VERTIV (y demás clientes del juego de 3): las 3 secciones van en UNA etiqueta 4 x 6 in
+const es6x4 = !esEmerson && !esOrto && !esAbb;
+const etiquetasPorJuego = 1;
+// Tamaño de etiqueta del juego (decide qué impresora se usa)
+const tamJuego = es6x4 ? '4x6' : datos.tam;
 // Para ABB: separar OC y línea desde ocLinea tipo "102930L160"
 function abbOcLinea(){
   const raw = datos.ocLinea || "";
@@ -305,7 +312,7 @@ function fechaMesCorto(f){
   return f;
 }
 const fechaCorta = fechaMesCorto(datos.fecha);
-const tamNombre={'4x6':'4 × 6 in','2x4':'2 × 4 in','1.25x1':'1.25 × 1 in','125x1':'1.25 × 1 in'}[datos.tam]||'2 × 4 in';
+const tamNombre={'4x6':'4 × 6 in','2x4':'2 × 4 in','1.25x1':'1.25 × 1 in','125x1':'1.25 × 1 in'}[tamJuego]||'2 × 4 in';
 
 
 // ═══ Reacomodo manual de piezas ═══
@@ -389,7 +396,7 @@ function preview(cant){
   // Emerson: solo etiqueta 2
   if(esEmerson){ return `<div class="emp-stack">${etq2}</div>`; }
   // VERTIV: las tres
-  return `<div class="emp-stack">
+  return `<div class="emp-stack una">
     <div class="emp-lbl emp1" style="align-items:center;justify-content:center;position:relative;">
       <div style="text-align:center;">
         <div class="l1" style="font-size:26px;">${datos.np}</div>
@@ -513,7 +520,7 @@ function renderLabels(){
     html+=`<div class="label-card">
       <div class="label-card-head"><span class="ocl">${datos.ocLinea}</span><span class="npr">${titulo}</span></div>
       <div class="preview-wrap">${preview(cant)}</div>
-      <div class="tam-label">${tamNombre} · ${esEmerson?'1 etiqueta':'juego de 3 etiquetas'} · ${copiasTxt}</div>
+      <div class="tam-label">${tamNombre} · ${esEmerson?'1 etiqueta':'1 etiqueta con 3 secciones'} · ${copiasTxt}</div>
       <div class="fields">
         <div class="field"><div class="k">Número de Parte</div><div class="v">${datos.np}</div></div>
         <div class="field"><div class="k">Cantidad paquete</div><div class="v">${cant} pzas</div></div>
@@ -934,9 +941,36 @@ ${ZPL_CFG}
   return out;
 }
 
+// Quita encabezado/cierre (^XA, ^CI28, config, ^PW, ^LL, ^XZ) para usar una etiqueta como SECCIÓN
+function cuerpoZPL(z){
+  return z.split('\n').filter(l => {
+    const t = l.trim();
+    return t && t !== '^XA' && t !== '^XZ' && t !== '^CI28' && t !== ZPL_CFG && !t.startsWith('^PW') && !t.startsWith('^LL');
+  }).join('\n');
+}
+// UNA etiqueta 4 x 6 in (812 x 1218 dots) con las 3 secciones apiladas, cada una de 406 dots de alto.
+// ^LH mueve el origen de cada sección; las posiciones internas son las mismas de antes.
+function zplVertiv6x4(c){
+  return `^XA
+^CI28
+${ZPL_CFG}
+^PW812
+^LL1218
+^LH0,0
+${cuerpoZPL(zplEtiqueta1(c))}
+^LH0,406
+${cuerpoZPL(zplEtiqueta2(c))}
+^LH0,812
+${cuerpoZPL(zplEtiqueta3(c))}
+^LH0,0
+^FO20,405^GB772,2,2^FS
+^FO20,811^GB772,2,2^FS
+^XZ`;
+}
+
 function zplJuego(c){
   if(esEmerson){ return zplEtiqueta2(c)+'\n'; }
-  return zplEtiqueta1(c)+'\n'+zplEtiqueta2(c)+'\n'+zplEtiqueta3(c)+'\n';
+  return zplVertiv6x4(c)+'\n';
 }
 
 // Varios juegos ordenados POR TIPO: primero todas las de arriba (1),
@@ -944,11 +978,8 @@ function zplJuego(c){
 // cants = lista con la cantidad de cada juego a imprimir (repetida por copias).
 function zplPorTipo(cants){
   if(esEmerson){ return cants.map(c=>zplEtiqueta2(c)+'\n').join(''); }
-  let z='';
-  cants.forEach(c=>{ z+=zplEtiqueta1(c)+'\n'; });
-  cants.forEach(c=>{ z+=zplEtiqueta2(c)+'\n'; });
-  cants.forEach(c=>{ z+=zplEtiqueta3(c)+'\n'; });
-  return z;
+  // Ahora cada juego es UNA etiqueta 6 x 4 con las 3 secciones
+  return cants.map(c=>zplVertiv6x4(c)+'\n').join('');
 }
 
 async function enviarZPL(device,zpl){
@@ -959,8 +990,8 @@ async function enviarZPL(device,zpl){
 async function imprimirGrupo(gi, soloUno){
   const rv = leerReacomodo();
   if(!rv.vacio && !rv.valido){ showMessage('El reacomodo no cuadra: ' + rv.msg, 'error'); return; }
-  const device=deviceParaTamano(datos.tam);
-  if(!device){showMessage('No hay impresora para el tamaño '+datos.tam,'error');return;}
+  const device=deviceParaTamano(tamJuego);
+  if(!device){showMessage('No hay impresora para el tamaño '+tamJuego,'error');return;}
   await precargarLogos();
   const grupos = agruparPaquetes();
   const g = grupos[gi];
@@ -1069,7 +1100,8 @@ async function imprimirTodo(){
     return;
   }
 
-  const device=deviceParaTamano(datos.tam);
+  const device=deviceParaTamano(tamJuego);
+  if(!device){ showMessage('No hay impresora asignada para '+tamNombre+'. Configúrala en "Impresora por tamaño".','error'); btn.className='print-btn ready'; btn.disabled=false; return; }
   btn.textContent=`ENVIANDO ${total} ETIQUETAS...`;
   debugLog('Imprimiendo todo: '+total+' etiquetas en '+(device.name||device.uid));
   try{

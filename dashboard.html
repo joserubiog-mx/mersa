@@ -423,6 +423,7 @@
                         <tr>
                             <th>#</th>
                             <th>Área</th>
+                            <th>Proceso</th>
                             <th>Tipo Envío</th>
                             <th>Cant. Enviada</th>
                             <th>Desperdicio</th>
@@ -479,7 +480,8 @@
                 cantidadDesperdicio: parseInt(campos[4]) || 0,
                 fechaRegistro: campos[5] || '',
                 operador: campos[6] || '',
-                maquina: campos[7] || ''
+                maquina: campos[7] || '',
+                proceso: campos[8] || ''
             };
         });
 
@@ -496,7 +498,8 @@
         document.getElementById('orderId').textContent = oc;
 
         // KPIs: piezas reprocesadas y desperdiciadas
-        const esRepro = r => (r.tipoEnvio || '').trim().toLowerCase() === 'reproceso';
+        // Reproceso: "Reproceso" y "Reproceso Acabado"
+        const esRepro = r => (r.tipoEnvio || '').trim().toLowerCase().startsWith('reproceso');
         // Piezas reprocesadas: lo que mandó a reproceso el área que INICIÓ el reproceso
         // (la primera en fecha). Las áreas siguientes solo pasan esas mismas piezas,
         // así que no se vuelven a sumar (Pulido 1 → Doblez 1 = 1 pieza, no 2).
@@ -505,12 +508,15 @@
         const reproCalc = reprosOrd.filter(r => r.area === areaInicioRepro).reduce((s, r) => s + r.cantidadEnviada, 0);
         const areasRepro = [...new Set(reprosOrd.map(r => r.area))];
         const despCalc = registros.reduce((s, r) => s + r.cantidadDesperdicio, 0);
-        // Se usa el total del Registro Maestro si viene; si no, lo calculado de los movimientos
-        const numOr = (v, alt) => (v !== null && v !== '' && !isNaN(parseInt(v))) ? parseInt(v) : alt;
-        // El total del Registro Maestro solo cuenta reprocesos de la primera área de la orden,
-        // por eso se toma el mayor entre ese total y lo calculado de los movimientos.
-        const reproNum = Math.max(numOr(reproTotal, 0), reproCalc);
-        const despNum = numOr(despTotal, despCalc);
+        // REGLA DE CONTEO (calculada de los movimientos que se muestran abajo):
+        //  - Desperdicio: suma de TODAS las áreas (cada área tira piezas distintas).
+        //  - Reproceso:   solo lo que mandó el área que INICIÓ el reproceso (las demás pasan las mismas piezas).
+        const reproNum = reproCalc;
+        const despNum = despCalc;
+        // Desglose de desperdicio por área (para el subtítulo)
+        const despPorArea = {};
+        registros.forEach(r => { if (r.cantidadDesperdicio > 0) despPorArea[r.area] = (despPorArea[r.area] || 0) + r.cantidadDesperdicio; });
+        const despDetalle = Object.entries(despPorArea).map(([a, n]) => a + ' ' + n).join(' · ');
         const movRepro = registros.filter(esRepro).length;
         const movDesp = registros.filter(r => r.cantidadDesperdicio > 0).length;
         document.getElementById('kpiRow').innerHTML = `
@@ -524,7 +530,7 @@
             <div class="kpi desp ${despNum > 0 ? 'on' : ''}">
                 <div>
                     <div class="kpi-label">${despNum > 0 ? '✕ Piezas desperdiciadas' : 'Sin desperdicio'}</div>
-                    <div class="kpi-sub">${movDesp} registro(s) con desperdicio</div>
+                    <div class="kpi-sub">${movDesp > 0 ? despDetalle : 'Ningún registro con desperdicio'}</div>
                 </div>
                 <div class="kpi-value ${despNum > 0 ? '' : 'zero'}">${despNum}</div>
             </div>`;
@@ -593,7 +599,7 @@
     }
 
     function getAreaTag(area, tipoEnvio) {
-        if (tipoEnvio === 'Reproceso') return '<span class="area-tag tag-reproceso">REPROCESO</span>';
+        if ((tipoEnvio || '').toLowerCase().startsWith('reproceso')) return '<span class="area-tag tag-reproceso">REPROCESO</span>';
         const type = getAreaType(area);
         const labels = {
             ventas: 'VENTAS', gerencia: 'GERENCIA', desarrollo: 'DESARROLLO',
@@ -635,13 +641,16 @@
         const el = document.getElementById(contenedor);
         if (registros.length === 0) { el.innerHTML = '<div class="timeline-empty">Sin movimientos</div>'; return; }
         el.innerHTML = registros.map((r, i) => {
-            const type = (r.tipoEnvio || '').toLowerCase() === 'reproceso' ? 'reproceso' : getAreaType(r.area);
+            const type = (r.tipoEnvio || '').toLowerCase().startsWith('reproceso') ? 'reproceso' : getAreaType(r.area);
             const isLast = i === registros.length - 1;
             const dotClass = isLast ? `${type} active` : type;
 
             let metaItems = '';
             if (r.tipoEnvio && r.tipoEnvio !== 'Revision') {
                 metaItems += `<div class="meta-item">Tipo: <strong>${r.tipoEnvio}</strong></div>`;
+            }
+            if (r.proceso) {
+                metaItems += `<div class="meta-item">Proceso: <strong>${r.proceso}</strong></div>`;
             }
             if (r.cantidadEnviada > 0) {
                 metaItems += `<div class="meta-item">Enviadas: <strong>${r.cantidadEnviada}</strong></div>`;
@@ -683,6 +692,7 @@
             <tr>
                 <td class="td-mono" style="color:var(--text-dim)">${i + 1}</td>
                 <td><strong>${r.area}</strong></td>
+                <td style="font-size:12px;">${r.proceso || '—'}</td>
                 <td class="td-mono">${r.tipoEnvio || '—'}</td>
                 <td class="td-mono">${r.cantidadEnviada || '—'}</td>
                 <td class="td-mono" style="color:${r.cantidadDesperdicio > 0 ? 'var(--red)' : 'inherit'}">${r.cantidadDesperdicio || '0'}</td>

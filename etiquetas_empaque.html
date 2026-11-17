@@ -87,7 +87,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .emp-stack{display:flex;flex-direction:column;gap:6px;width:260px;}
 .emp-stack.una{gap:0;background:#fff;border-radius:4px;padding:2px 0;}
 .emp-stack.una .emp-lbl{border-radius:0;}
-.emp-stack.una .emp-lbl + .emp-lbl{border-top:1px dashed #999;}
+.emp-stack.una .emp-lbl + .emp-lbl{border-top:1px solid #eee;}
 .emp-lbl{background:#fff;color:#000;border-radius:3px;font-family:Arial,sans-serif;padding:8px 10px;width:260px;height:120px;box-sizing:border-box;overflow:hidden;}
 /* Etiqueta 1: texto grande */
 .emp1{display:flex;flex-direction:column;justify-content:center;gap:2px;}
@@ -953,6 +953,8 @@ function cuerpoZPL(z){
 }
 // UNA etiqueta 4 x 6 in (812 x 1218 dots) con las 3 secciones apiladas, cada una de 406 dots de alto.
 // ^LH mueve el origen de cada sección; las posiciones internas son las mismas de antes.
+// SIN líneas horizontales de separación: una línea de lado a lado calienta toda una fila
+// del cabezal a la vez y corta el ribbon. Las secciones se separan solo por el espacio en blanco.
 function zplVertiv6x4(c){
   return `^XA
 ^CI28
@@ -966,8 +968,6 @@ ${cuerpoZPL(zplEtiqueta2(c))}
 ^LH0,812
 ${cuerpoZPL(zplEtiqueta3(c))}
 ^LH0,0
-^FO20,405^GB772,2,2^FS
-^FO20,811^GB772,2,2^FS
 ^XZ`;
 }
 

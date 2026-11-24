@@ -93,8 +93,8 @@ function dur(h){
   h = num(h);
   if (h <= 0) return '0 min';
   if (h < 1) return Math.round(h * 60) + ' min';
-  if (h < 24) return (Math.round(h * 10) / 10) + ' h';
-  return (Math.round(h / 24 * 10) / 10) + ' días';
+  if (h < 9) return (Math.round(h * 10) / 10) + ' h';
+  return (Math.round(h / 9 * 10) / 10) + ' días lab.';
 }
 
 document.getElementById('periodo').textContent = P.get('periodo') || '';
@@ -123,10 +123,12 @@ function render(){
   const pctEnt = total ? Math.round(entregadas * 100 / total) : 0;
   const maxSol = Math.max(1, ...areas.map(a => a.sol));
   const maxR = Math.max(1, ...rangos);
-  const rangoLbl = ['Menos de 2 h','2 a 8 h','8 a 24 h','1 a 3 días','Más de 3 días'];
+  const rangoLbl = ['Menos de 2 h','2 a 4 h','4 a 9 h','1 a 3 días lab.','Más de 3 días lab.'];
+  const lab = P.get('lab') || '';
   const ocRep = rep.length;
 
   app.innerHTML = `
+  ${lab ? '<div class="hint" style="margin:0 0 10px">⏱ ' + esc(lab) + '</div>' : ''}
   <div class="cards">
     <div class="card"><div class="lbl">Solicitudes</div><div class="num">${total}</div><div class="sub">${areas.length} área(s) solicitante(s)</div></div>
     <div class="card"><div class="lbl">Entregadas</div><div class="num">${entregadas}</div><div class="sub">${pctEnt}% de las solicitudes</div></div>
@@ -186,7 +188,7 @@ function render(){
     ${pend.length ? `<div class="scroll"><table>
       <thead><tr><th>Folio</th><th>Orden de compra / línea</th><th>Área</th><th class="n">Esperando</th></tr></thead>
       <tbody>${pend.map(p => {
-        const st = p.esp >= 72 ? '<span class="pill bad">▲ Más de 3 días</span>' : p.esp >= 24 ? '<span class="pill warn">● Más de 1 día</span>' : '';
+        const st = p.esp >= 27 ? '<span class="pill bad">▲ Más de 3 días lab.</span>' : p.esp >= 9 ? '<span class="pill warn">● Más de 1 día lab.</span>' : '';
         return `<tr><td class="mono">${esc(p.folio)}</td><td class="mono">${esc(p.oc)}</td><td>${esc(p.area)}</td>
           <td class="n">${dur(p.esp)} ${st}</td></tr>`; }).join('')}</tbody>
     </table></div>` : ''}

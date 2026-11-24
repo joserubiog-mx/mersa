@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Copias Controladas — MERSA</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;600;700&display=swap');
+  :root{
+    --bg:#0c0f14; --surface:#141820; --surface2:#1a2030; --border:#2a3348;
+    --accent:#3b82f6; --accent-dim:rgba(59,130,246,.14);
+    --ok:#22c55e; --warn:#f59e0b; --bad:#ef4444;
+    --text:#e2e8f0; --text-dim:#8ea0b8; --text-muted:#64748b;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:'DM Sans',system-ui,sans-serif;min-height:100vh;}
+  .header{background:linear-gradient(135deg,var(--surface),var(--surface2));border-bottom:1px solid var(--border);
+    padding:18px 28px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;}
+  .brand{display:flex;align-items:center;gap:14px;}
+  .brand img{height:40px;width:auto;display:block;}
+  .brand h1{font-family:'JetBrains Mono',monospace;font-size:17px;color:var(--accent);letter-spacing:1px;}
+  .brand span{display:block;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted);letter-spacing:1.5px;text-transform:uppercase;}
+  .periodo{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--text-dim);}
+  .wrap{max-width:1180px;margin:0 auto;padding:24px 20px 48px;}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-bottom:22px;}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 18px;}
+  .card .lbl{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:var(--text-muted);}
+  .card .num{font-family:'JetBrains Mono',monospace;font-size:28px;font-weight:700;margin-top:6px;font-variant-numeric:tabular-nums;}
+  .card .sub{font-size:12px;color:var(--text-dim);margin-top:4px;}
+  .grid2{display:grid;grid-template-columns:1.35fr 1fr;gap:18px;margin-bottom:18px;}
+  .panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:18px;}
+  .grid2 .panel{margin-bottom:0;}
+  .panel h2{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:1.2px;text-transform:uppercase;color:var(--text-dim);
+    margin-bottom:4px;display:flex;align-items:center;gap:8px;}
+  .panel h2::before{content:'';width:4px;height:14px;background:var(--accent);border-radius:2px;}
+  .panel .hint{font-size:12px;color:var(--text-muted);margin-bottom:16px;}
+  /* barras horizontales por área */
+  .hbars{display:flex;flex-direction:column;gap:2px;}
+  .hrow{display:grid;grid-template-columns:150px 1fr 44px;align-items:center;gap:10px;padding:5px 6px;border-radius:6px;position:relative;cursor:default;}
+  .hrow:hover{background:var(--surface2);}
+  .hrow .name{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .hrow .track{height:14px;}
+  .hrow .bar{height:14px;background:var(--accent);border-radius:0 4px 4px 0;min-width:2px;}
+  .hrow .val{font-family:'JetBrains Mono',monospace;font-size:13px;text-align:right;font-variant-numeric:tabular-nums;}
+  /* histograma */
+  .cols{display:flex;align-items:flex-end;gap:10px;height:190px;padding:0 4px;border-bottom:1px solid var(--border);}
+  .col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;cursor:default;}
+  .col .v{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text);margin-bottom:4px;}
+  .col .b{width:100%;max-width:56px;background:var(--accent);border-radius:4px 4px 0 0;min-height:2px;}
+  .col:hover .b{filter:brightness(1.2);}
+  .colx{display:flex;gap:10px;padding:8px 4px 0;}
+  .colx div{flex:1;text-align:center;font-size:11px;color:var(--text-dim);}
+  /* tablas */
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);
+    text-align:left;padding:9px 10px;border-bottom:1px solid var(--border);font-weight:600;}
+  td{padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:top;}
+  tr:last-child td{border-bottom:none;}
+  tbody tr:hover td{background:var(--surface2);}
+  td.n,th.n{text-align:right;font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums;}
+  .mono{font-family:'JetBrains Mono',monospace;}
+  .pill{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;white-space:nowrap;}
+  .pill.warn{background:rgba(245,158,11,.14);color:var(--warn);}
+  .pill.bad{background:rgba(239,68,68,.14);color:var(--bad);}
+  .pill.ok{background:rgba(34,197,94,.14);color:var(--ok);}
+  .empty{color:var(--text-muted);font-size:13px;padding:18px 0;text-align:center;}
+  .nodata{text-align:center;padding:80px 20px;color:var(--text-dim);font-family:'JetBrains Mono',monospace;}
+  .tip{position:fixed;pointer-events:none;background:#0b0e13;border:1px solid var(--border);border-radius:8px;padding:8px 10px;
+    font-size:12px;line-height:1.5;color:var(--text);box-shadow:0 6px 20px rgba(0,0,0,.45);display:none;z-index:10;max-width:260px;}
+  .tip b{color:#fff;}
+  .scroll{overflow-x:auto;}
+  @media (max-width:860px){ .grid2{grid-template-columns:1fr;} .grid2 .panel{margin-bottom:18px;} .hrow{grid-template-columns:110px 1fr 40px;} }
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="brand">
+    <img src="logo.png" alt="RUBIO">
+    <div><h1>COPIAS CONTROLADAS</h1><span>Solicitud · entrega · recepción</span></div>
+  </div>
+  <div class="periodo" id="periodo">—</div>
+</div>
+<div class="wrap" id="app"></div>
+<div class="tip" id="tip"></div>
+
+<script>
+const P = new URLSearchParams(window.location.search);
+const filas = s => (s ? s.split('|').filter(Boolean).map(r => r.split('~')) : []);
+const num = v => { const n = parseFloat(v); return isNaN(n) ? 0 : n; };
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+// Horas → texto legible
+function dur(h){
+  h = num(h);
+  if (h <= 0) return '0 min';
+  if (h < 1) return Math.round(h * 60) + ' min';
+  if (h < 24) return (Math.round(h * 10) / 10) + ' h';
+  return (Math.round(h / 24 * 10) / 10) + ' días';
+}
+
+document.getElementById('periodo').textContent = P.get('periodo') || '';
+const k = (P.get('kpi') || '').split('~');
+const total = num(k[0]), entregadas = num(k[1]), recibidas = num(k[2]);
+const promEnt = num(k[3]), maxEnt = num(k[4]), promRec = num(k[5]);
+const areas = filas(P.get('areas')).map(c => ({ area:c[0], sol:num(c[1]), ent:num(c[2]), hrs:num(c[3]), pend:num(c[4]) }))
+  .sort((a,b) => b.sol - a.sol || a.area.localeCompare(b.area));
+const rep = filas(P.get('rep')).map(c => ({ oc:c[0], veces:num(c[1]), areas:c[2] || '' }))
+  .sort((a,b) => b.veces - a.veces || a.oc.localeCompare(b.oc));
+const pend = filas(P.get('pend')).map(c => ({ folio:c[0], oc:c[1], area:c[2], esp:num(c[3]) }))
+  .sort((a,b) => b.esp - a.esp);
+const rangos = (P.get('rangos') || '0~0~0~0~0').split('~').map(num);
+const pendTotal = total - entregadas;
+
+const app = document.getElementById('app');
+if (!P.get('kpi')) {
+  app.innerHTML = '<div class="nodata">Sin datos. Abre este dashboard desde el formulario “Dashboard Copias Controladas” en Zoho Creator.</div>';
+} else if (total === 0) {
+  app.innerHTML = '<div class="nodata">No hay solicitudes de copia controlada en ' + esc(P.get('periodo') || 'el periodo') + '.</div>';
+} else {
+  render();
+}
+
+function render(){
+  const pctEnt = total ? Math.round(entregadas * 100 / total) : 0;
+  const maxSol = Math.max(1, ...areas.map(a => a.sol));
+  const maxR = Math.max(1, ...rangos);
+  const rangoLbl = ['Menos de 2 h','2 a 8 h','8 a 24 h','1 a 3 días','Más de 3 días'];
+  const ocRep = rep.length;
+
+  app.innerHTML = `
+  <div class="cards">
+    <div class="card"><div class="lbl">Solicitudes</div><div class="num">${total}</div><div class="sub">${areas.length} área(s) solicitante(s)</div></div>
+    <div class="card"><div class="lbl">Entregadas</div><div class="num">${entregadas}</div><div class="sub">${pctEnt}% de las solicitudes</div></div>
+    <div class="card"><div class="lbl">Pendientes de entrega</div><div class="num" style="color:${pendTotal>0?'var(--warn)':'var(--text)'}">${pendTotal}</div><div class="sub">${pendTotal>0?'Sin registro de entrega':'Todas entregadas'}</div></div>
+    <div class="card"><div class="lbl">Tiempo promedio de entrega</div><div class="num">${entregadas?dur(promEnt):'—'}</div><div class="sub">De la solicitud a la entrega</div></div>
+    <div class="card"><div class="lbl">Entrega más tardada</div><div class="num">${entregadas?dur(maxEnt):'—'}</div><div class="sub">En el periodo</div></div>
+    <div class="card"><div class="lbl">Entrega → recepción</div><div class="num">${recibidas?dur(promRec):'—'}</div><div class="sub">${recibidas} recibida(s) · promedio</div></div>
+  </div>
+
+  <div class="grid2">
+    <div class="panel">
+      <h2>Solicitudes por área</h2>
+      <div class="hint">Áreas que más copias controladas solicitaron. Pasa el cursor para ver tiempos.</div>
+      <div class="hbars">
+        ${areas.map((a,i) => `
+          <div class="hrow" data-i="${i}">
+            <div class="name" title="${esc(a.area)}">${esc(a.area)}</div>
+            <div class="track"><div class="bar" style="width:${(a.sol/maxSol*100).toFixed(1)}%"></div></div>
+            <div class="val">${a.sol}</div>
+          </div>`).join('')}
+      </div>
+    </div>
+    <div class="panel">
+      <h2>Tiempo de entrega</h2>
+      <div class="hint">Cuánto tardaron las ${entregadas} copias entregadas desde su solicitud.</div>
+      <div class="cols">
+        ${rangos.map((v,i) => `<div class="col" data-r="${i}"><div class="v">${v}</div><div class="b" style="height:${(v/maxR*150).toFixed(0)}px"></div></div>`).join('')}
+      </div>
+      <div class="colx">${rangoLbl.map(l => `<div>${l}</div>`).join('')}</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Detalle por área</h2>
+    <div class="hint">Solicitudes, entregas y tiempo promedio de entrega de cada área.</div>
+    <div class="scroll"><table>
+      <thead><tr><th>Área</th><th class="n">Solicitudes</th><th class="n">Entregadas</th><th class="n">Pendientes</th><th class="n">Tiempo promedio</th></tr></thead>
+      <tbody>${areas.map(a => `<tr>
+        <td>${esc(a.area)}</td><td class="n">${a.sol}</td><td class="n">${a.ent}</td>
+        <td class="n" style="color:${a.pend>0?'var(--warn)':'inherit'}">${a.pend}</td>
+        <td class="n">${a.ent?dur(a.hrs/a.ent):'—'}</td></tr>`).join('')}</tbody>
+    </table></div>
+  </div>
+
+  <div class="panel">
+    <h2>Órdenes solicitadas más de una vez</h2>
+    <div class="hint">${ocRep ? ocRep + ' orden(es) de compra / línea con más de una solicitud en el periodo.' : 'Ninguna orden se solicitó más de una vez en el periodo.'}</div>
+    ${ocRep ? `<div class="scroll"><table>
+      <thead><tr><th>Orden de compra / línea</th><th class="n">Veces</th><th>Áreas que la solicitaron</th></tr></thead>
+      <tbody>${rep.map(r => `<tr><td class="mono">${esc(r.oc)}</td><td class="n">${r.veces}</td><td>${esc(r.areas)}</td></tr>`).join('')}</tbody>
+    </table></div>` : ''}
+  </div>
+
+  <div class="panel">
+    <h2>Pendientes de entrega</h2>
+    <div class="hint">${pendTotal ? 'Folios sin registro de entrega, del que más tiempo lleva esperando al más reciente.' + (pendTotal > pend.length ? ' Se muestran los primeros ' + pend.length + ' de ' + pendTotal + '.' : '') : 'No hay folios pendientes de entrega.'}</div>
+    ${pend.length ? `<div class="scroll"><table>
+      <thead><tr><th>Folio</th><th>Orden de compra / línea</th><th>Área</th><th class="n">Esperando</th></tr></thead>
+      <tbody>${pend.map(p => {
+        const st = p.esp >= 72 ? '<span class="pill bad">▲ Más de 3 días</span>' : p.esp >= 24 ? '<span class="pill warn">● Más de 1 día</span>' : '';
+        return `<tr><td class="mono">${esc(p.folio)}</td><td class="mono">${esc(p.oc)}</td><td>${esc(p.area)}</td>
+          <td class="n">${dur(p.esp)} ${st}</td></tr>`; }).join('')}</tbody>
+    </table></div>` : ''}
+  </div>`;
+
+  // ── Tooltips ──
+  const tip = document.getElementById('tip');
+  const show = (e, html) => { tip.innerHTML = html; tip.style.display = 'block'; move(e); };
+  const move = e => { const x = Math.min(e.clientX + 14, window.innerWidth - 270); tip.style.left = x + 'px'; tip.style.top = (e.clientY + 14) + 'px'; };
+  const hide = () => { tip.style.display = 'none'; };
+  document.querySelectorAll('.hrow').forEach(el => {
+    const a = areas[+el.dataset.i];
+    const html = `<b>${esc(a.area)}</b><br>Solicitudes: <b>${a.sol}</b><br>Entregadas: <b>${a.ent}</b> · Pendientes: <b>${a.pend}</b><br>Tiempo promedio: <b>${a.ent?dur(a.hrs/a.ent):'—'}</b>`;
+    el.addEventListener('mouseenter', e => show(e, html)); el.addEventListener('mousemove', move); el.addEventListener('mouseleave', hide);
+  });
+  document.querySelectorAll('.col').forEach(el => {
+    const i = +el.dataset.r;
+    const pct = entregadas ? Math.round(rangos[i] * 100 / entregadas) : 0;
+    const html = `<b>${rangoLbl[i]}</b><br>${rangos[i]} copia(s) · ${pct}% de las entregadas`;
+    el.addEventListener('mouseenter', e => show(e, html)); el.addEventListener('mousemove', move); el.addEventListener('mouseleave', hide);
+  });
+}
+</script>
+</body>
+</html>
